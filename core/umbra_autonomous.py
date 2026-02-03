@@ -2366,7 +2366,7 @@ class AutonomousLoop:
                 logger.info(f"📋 Got {len(posts)} posts, checking for new ones...")
                 posts_this_batch = 0
                 
-                for post in posts:
+                for post in (posts or []):
                     if not self.running:
                         break
                     
