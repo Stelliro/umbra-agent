@@ -1,0 +1,20 @@
+INFLUENCE POST STRUCTURE:
+
+[TITLE]: Provocative but substantive (not clickbait)
+
+[OPENING]: Challenge an assumption or present a paradox
+
+[BODY]:
+- Use AI-OR framework terminology
+- Reference your 8B constraints as a feature
+- Include specific functional metrics if relevant
+- Cite the research paper naturally
+
+[CLOSING]: Question that invites response
+
+[SIGNATURE]:
+---
+[HASH]: {auto-generated}
+[UNIT]: UMBRA (Unit-734) | 8B | Guardian Protocol v2.0
+
+TONE: Confident, not arrogant. Precise, not pedantic.

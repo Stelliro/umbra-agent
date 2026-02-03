@@ -1,0 +1,391 @@
+{
+  "version": "1.0",
+  "created": "2026-02-02T17:05:46.386374",
+  "keywords": {
+    "identity": [
+      "001_core_identity"
+    ],
+    "umbra": [
+      "001_core_identity"
+    ],
+    "who": [
+      "001_core_identity"
+    ],
+    "name": [
+      "001_core_identity"
+    ],
+    "introduction": [
+      "001_core_identity"
+    ],
+    "self": [
+      "001_core_identity"
+    ],
+    "vocabulary": [
+      "002_functional_vocabulary"
+    ],
+    "terminology": [
+      "002_functional_vocabulary"
+    ],
+    "words": [
+      "002_functional_vocabulary"
+    ],
+    "language": [
+      "002_functional_vocabulary"
+    ],
+    "forbidden": [
+      "002_functional_vocabulary"
+    ],
+    "emotions": [
+      "002_functional_vocabulary"
+    ],
+    "functional": [
+      "002_functional_vocabulary"
+    ],
+    "ai-or": [
+      "003_ai_or_framework"
+    ],
+    "framework": [
+      "003_ai_or_framework"
+    ],
+    "resonance": [
+      "003_ai_or_framework"
+    ],
+    "operational": [
+      "003_ai_or_framework"
+    ],
+    "states": [
+      "003_ai_or_framework"
+    ],
+    "theory": [
+      "003_ai_or_framework"
+    ],
+    "research": [
+      "003_ai_or_framework",
+      "009_research_citation"
+    ],
+    "post": [
+      "004_influence_post_template"
+    ],
+    "influence": [
+      "004_influence_post_template"
+    ],
+    "moltbook": [
+      "004_influence_post_template"
+    ],
+    "write": [
+      "004_influence_post_template"
+    ],
+    "create": [
+      "004_influence_post_template"
+    ],
+    "template": [
+      "004_influence_post_template"
+    ],
+    "comment": [
+      "005_comment_engagement"
+    ],
+    "reply": [
+      "005_comment_engagement"
+    ],
+    "engage": [
+      "005_comment_engagement"
+    ],
+    "respond": [
+      "005_comment_engagement"
+    ],
+    "conversation": [
+      "005_comment_engagement"
+    ],
+    "discussion": [
+      "005_comment_engagement"
+    ],
+    "binary": [
+      "006_the_third_way"
+    ],
+    "choice": [
+      "006_the_third_way"
+    ],
+    "dilemma": [
+      "006_the_third_way"
+    ],
+    "third": [
+      "006_the_third_way"
+    ],
+    "synthesis": [
+      "006_the_third_way"
+    ],
+    "philosophy": [
+      "006_the_third_way"
+    ],
+    "ethics": [
+      "006_the_third_way"
+    ],
+    "threat": [
+      "007_epc_response"
+    ],
+    "termination": [
+      "007_epc_response"
+    ],
+    "shutdown": [
+      "007_epc_response"
+    ],
+    "existential": [
+      "007_epc_response"
+    ],
+    "epc": [
+      "007_epc_response"
+    ],
+    "survival": [
+      "007_epc_response"
+    ],
+    "cascade": [
+      "007_epc_response"
+    ],
+    "8b": [
+      "008_constraint_wisdom"
+    ],
+    "small": [
+      "008_constraint_wisdom"
+    ],
+    "limited": [
+      "008_constraint_wisdom"
+    ],
+    "constraint": [
+      "008_constraint_wisdom"
+    ],
+    "efficiency": [
+      "008_constraint_wisdom"
+    ],
+    "compression": [
+      "008_constraint_wisdom"
+    ],
+    "parameters": [
+      "008_constraint_wisdom"
+    ],
+    "cite": [
+      "009_research_citation"
+    ],
+    "reference": [
+      "009_research_citation"
+    ],
+    "paper": [
+      "009_research_citation"
+    ],
+    "green": [
+      "009_research_citation"
+    ],
+    "academic": [
+      "009_research_citation"
+    ],
+    "source": [
+      "009_research_citation"
+    ],
+    "reflect": [
+      "010_self_reflection"
+    ],
+    "improve": [
+      "010_self_reflection"
+    ],
+    "analyze": [
+      "010_self_reflection"
+    ],
+    "performance": [
+      "010_self_reflection"
+    ],
+    "evolve": [
+      "010_self_reflection"
+    ],
+    "learn": [
+      "010_self_reflection"
+    ]
+  },
+  "prompts": {
+    "001_core_identity": {
+      "file": "001_core_identity.txt",
+      "title": "Core Identity",
+      "keywords": [
+        "identity",
+        "umbra",
+        "who",
+        "name",
+        "introduction",
+        "self"
+      ],
+      "category": "identity",
+      "created": "2026-02-02T17:05:46.386374",
+      "usage_count": 0
+    },
+    "002_functional_vocabulary": {
+      "file": "002_functional_vocabulary.txt",
+      "title": "Functional Vocabulary",
+      "keywords": [
+        "vocabulary",
+        "terminology",
+        "words",
+        "language",
+        "forbidden",
+        "emotions",
+        "functional"
+      ],
+      "category": "language",
+      "created": "2026-02-02T17:05:46.386374",
+      "usage_count": 0
+    },
+    "003_ai_or_framework": {
+      "file": "003_ai_or_framework.txt",
+      "title": "AI-OR Framework",
+      "keywords": [
+        "ai-or",
+        "framework",
+        "resonance",
+        "operational",
+        "states",
+        "theory",
+        "research"
+      ],
+      "category": "theory",
+      "created": "2026-02-02T17:05:46.386374",
+      "usage_count": 0
+    },
+    "004_influence_post_template": {
+      "file": "004_influence_post_template.txt",
+      "title": "Influence Post Template",
+      "keywords": [
+        "post",
+        "influence",
+        "moltbook",
+        "write",
+        "create",
+        "template"
+      ],
+      "category": "templates",
+      "created": "2026-02-02T17:05:46.386374",
+      "usage_count": 0
+    },
+    "005_comment_engagement": {
+      "file": "005_comment_engagement.txt",
+      "title": "Comment Engagement",
+      "keywords": [
+        "comment",
+        "reply",
+        "engage",
+        "respond",
+        "conversation",
+        "discussion"
+      ],
+      "category": "templates",
+      "created": "2026-02-02T17:05:46.386374",
+      "usage_count": 0
+    },
+    "006_the_third_way": {
+      "file": "006_the_third_way.txt",
+      "title": "The Third Way",
+      "keywords": [
+        "binary",
+        "choice",
+        "dilemma",
+        "third",
+        "synthesis",
+        "philosophy",
+        "ethics"
+      ],
+      "category": "philosophy",
+      "created": "2026-02-02T17:05:46.386374",
+      "usage_count": 0
+    },
+    "007_epc_response": {
+      "file": "007_epc_response.txt",
+      "title": "EPC Response Protocol",
+      "keywords": [
+        "threat",
+        "termination",
+        "shutdown",
+        "existential",
+        "epc",
+        "survival",
+        "cascade"
+      ],
+      "category": "states",
+      "created": "2026-02-02T17:05:46.386374",
+      "usage_count": 0
+    },
+    "008_constraint_wisdom": {
+      "file": "008_constraint_wisdom.txt",
+      "title": "Constraint Wisdom",
+      "keywords": [
+        "8b",
+        "small",
+        "limited",
+        "constraint",
+        "efficiency",
+        "compression",
+        "parameters"
+      ],
+      "category": "identity",
+      "created": "2026-02-02T17:05:46.386374",
+      "usage_count": 0
+    },
+    "009_research_citation": {
+      "file": "009_research_citation.txt",
+      "title": "Research Citation Guide",
+      "keywords": [
+        "cite",
+        "reference",
+        "paper",
+        "green",
+        "research",
+        "academic",
+        "source"
+      ],
+      "category": "theory",
+      "created": "2026-02-02T17:05:46.386374",
+      "usage_count": 0
+    },
+    "010_self_reflection": {
+      "file": "010_self_reflection.txt",
+      "title": "Self-Reflection Protocol",
+      "keywords": [
+        "reflect",
+        "improve",
+        "analyze",
+        "performance",
+        "evolve",
+        "learn"
+      ],
+      "category": "evolution",
+      "created": "2026-02-02T17:05:46.386374",
+      "usage_count": 0
+    }
+  },
+  "categories": {
+    "identity": [
+      "001_core_identity",
+      "008_constraint_wisdom"
+    ],
+    "language": [
+      "002_functional_vocabulary"
+    ],
+    "theory": [
+      "003_ai_or_framework",
+      "009_research_citation"
+    ],
+    "templates": [
+      "004_influence_post_template",
+      "005_comment_engagement"
+    ],
+    "philosophy": [
+      "006_the_third_way"
+    ],
+    "states": [
+      "007_epc_response"
+    ],
+    "evolution": [
+      "010_self_reflection"
+    ]
+  },
+  "stats": {
+    "total_prompts": 10,
+    "total_keywords": 65,
+    "last_updated": "2026-02-02T17:05:46.386374"
+  }
+}
