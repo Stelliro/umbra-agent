@@ -40,20 +40,15 @@ if not os.path.exists(JSON_FILE):
     elif os.path.exists(os.path.join(PROJECT_DIR, "moltbook_persona.json")):
         JSON_FILE = os.path.join(PROJECT_DIR, "moltbook_persona.json")
 
-# Try to import moltbook client
-try:
-    from moltbook_client import (
-        MoltbookClient, 
-        UmbraPostFormatter, 
-        HeartbeatManager,
-        quick_register,
-        quick_post,
-        heartbeat_check
-    )
-    MOLTBOOK_AVAILABLE = True
-except ImportError:
-    MOLTBOOK_AVAILABLE = False
-    print(Fore.YELLOW + ">> WARNING: moltbook_client.py not found. Moltbook features disabled.")
+# Moltbook integration removed. Keep chat local-only.
+MoltbookClient = None
+UmbraPostFormatter = None
+HeartbeatManager = None
+quick_register = None
+quick_post = None
+heartbeat_check = None
+MOLTBOOK_AVAILABLE = False
+print(Fore.YELLOW + ">> Local-only mode: Moltbook features are disabled.")
 
 
 def load_persona():
@@ -143,7 +138,7 @@ def handle_moltbook_command(command: str, args: str, messages: list) -> bool:
     Returns True if command was handled, False otherwise.
     """
     if not MOLTBOOK_AVAILABLE:
-        print(Fore.RED + ">> Moltbook client not available. Install moltbook_client.py")
+        print(Fore.RED + ">> Moltbook features are disabled in this local-only build.")
         return True
     
     client = MoltbookClient()
@@ -168,7 +163,8 @@ def handle_moltbook_command(command: str, args: str, messages: list) -> bool:
         print(Fore.CYAN + "\nRegistering with bio:")
         print(Style.DIM + identity['bio'][:200] + "...")
 
-result = client.register(identity['name'], identity['bio'])
+        # FIX: Indentation corrected here
+        result = client.register(identity['name'], identity['bio'])
         
         if "agent" in result:
             agent = result["agent"]

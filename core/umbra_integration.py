@@ -20,7 +20,7 @@ import time
 try:
     from umbra_autonomous import (
         AutonomousLoop, UmbraCore, PromptEvolver,
-        InfluenceEngine, MoltbookAgent, CONFIG, logger
+        InfluenceEngine, CONFIG, logger
     )
     HAS_BASE = True
 except ImportError as e:

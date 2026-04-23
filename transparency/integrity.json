@@ -1,0 +1,21 @@
+[
+  {
+    "t": "Tue Feb 10 04:41:38 2026",
+    "by": "GENESIS",
+    "note": "v0.8.0 Glass Box - Initial Snapshot",
+    "h": {
+      "core\\file_inbox.py": "1c19de0bcc831d4c",
+      "core\\moltbook_client.py": "88017f939642dcd5",
+      "core\\prompt_index.py": "bfe0e2b5591e8b0d",
+      "core\\sd_bridge.py": "2aabb8a3143c08e6",
+      "core\\umbra_autonomous.py": "290f9e6f707ebf53",
+      "core\\umbra_boot.py": "b286fde05dc75e0b",
+      "core\\umbra_integration.py": "7ff5d95e24e3030f",
+      "core\\umbra_state.py": "8383d4c1b1cb9f5b",
+      "core\\uplink_v2.py": "84f5d486a5cc6ef2",
+      "core\\version.py": "365322a898d77479",
+      "core\\__init__.py": "a29652c12e4c0d5a",
+      "contract\\umbra_transparency.py": "daec50f7f3263eeb"
+    }
+  }
+]

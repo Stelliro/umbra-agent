@@ -1,0 +1,73 @@
+# Python cache/build
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local runtime artifacts
+*.log
+*.tmp
+*.temp
+*.bak
+*.indent_backup
+*.state_fix_backup
+
+# Local credentials/secrets
+credentials.json
+access_credentials.json
+login.json
+**/*credential*.json
+**/*credentials*.json
+**/*secret*.json
+**/*token*.json
+*.key
+*.pem
+*.crt
+
+# AI memory/state/thought data (keep local only)
+data/chats/
+data/comments/
+data/inbox/
+data/logs/
+data/screenshots/
+data/backups/
+data/handler_alerts.json
+data/handler_conversations.json
+data/knowledge_index.json
+data/threat_index.json
+data/decision_log.json
+data/evolving_prompt.json
+data/prompt_evolutions.json
+data/session_state.json
+data/umbra_ai_or_state.json
+data/umbra_bio_state.json
+data/umbra_objectives.json
+data/umbra_self_memory.json
+data/influence_tracker.json
+data/post_index.json
+
+# Additional thought/memory-like artifacts
+**/*memory*.json
+**/*thought*.json
+**/*conversation*.json
+**/*chat*.json
+**/*session*.json
+
+# Optional local docs/history not needed for public repo
+data/comments/
