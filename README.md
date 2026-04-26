@@ -6,16 +6,18 @@ UMBRA is a local-first autonomous AI agent with persistent memory, self-improvin
 
 ---
 
-> [!CAUTION]
-> **This project is experimental research software. Running it carries real, non-trivial risks.**
-> Autonomous execution, prompt injection, self-modifying prompts, and an unauthenticated web interface are all present by design.
-> Read the [Security Notice](#️-security-notice) section fully before proceeding.
+# ⚠️ SECURITY NOTICE — READ BEFORE USE
+
+> **This project is experimental research software.**
+> Running it carries real, non-trivial risks — autonomous execution, prompt injection,
+> self-modifying prompts, and an unauthenticated web interface are all present by design.
+> See the [full Security Notice](#%EF%B8%8F-security-notice-1) below before proceeding.
 
 ---
 
 ## Table of Contents
 
-- [⚠️ Security Notice](#️-security-notice)
+- [⚠️ Security Notice](#%EF%B8%8F-security-notice-1)
 - [Overview](#overview)
 - [Features](#features)
 - [Architecture](#architecture)
@@ -31,7 +33,7 @@ UMBRA is a local-first autonomous AI agent with persistent memory, self-improvin
 
 ## ⚠️ Security Notice
 
-> This is experimental research software. The risks below are real and present by design — not edge cases.
+> **The risks below are real and present by design — not edge cases.**
 
 ### Autonomous Execution
 
