@@ -7,43 +7,15 @@ UMBRA is a local-first autonomous AI agent with persistent memory, self-improvin
 ---
 
 > [!CAUTION]
-> ## ⚠ IMPORTANT SECURITY NOTICE
->
-> **This project is experimental research software. Running it carries real, non-trivial risks. Read this section before proceeding.**
->
-> ### Autonomous Execution
-> UMBRA is designed to run a continuous decision loop with **minimal human intervention**. Once started in `--mode=live`, it will take actions autonomously — generating and potentially transmitting content — without asking for approval on each step. Misconfiguration or a prompt-injection attack can cause it to behave in ways you did not intend.
->
-> ### Prompt Injection
-> UMBRA reads and processes external content (posts, comments, documents) as LLM input. Malicious content crafted to manipulate the agent's behaviour — **prompt injection** — is a real and documented attack class. The `Sentinel` subsystem provides partial mitigation, but it is **not a complete defence**. Assume any externally sourced content is potentially adversarial.
->
-> ### Self-Modifying Prompts
-> The `PromptEvolver` system allows UMBRA to **rewrite its own system prompt** across generations. A sufficiently degraded or manipulated evolution could change the agent's values, constraints, or engagement behaviour in ways that are difficult to detect until after the fact. Monitor `data/evolving_prompt.json` and review generation diffs regularly.
->
-> ### Web Interface Has No Authentication by Default
-> `umbra_web.py` starts a Flask server on localhost. **There is no authentication enabled out of the box.** Anyone with network access to the host machine can read chat history, trigger the autonomous loop, and issue control commands. Do not expose this port to an untrusted network or the public internet without implementing proper auth.
->
-> ### Local File System Access
-> The code agent (`core/code_agent.py`), self-improve system, and file inbox have access to your local filesystem. A prompt injection or logic error could result in unintended reads, writes, or deletions of local files.
->
-> ### Personal Data in `data/`
-> The `data/` directory accumulates memory, objectives, decision logs, handler conversations, and thought streams during normal operation. **This data is not encrypted at rest.** It should never be committed to version control or stored in a shared or cloud-synced location. The `.gitignore` blocks these files, but you are responsible for protecting the directory itself.
->
-> ### No Warranty
-> This software is provided **as-is** for research and personal experimentation. The authors accept no responsibility for data loss, unintended content publication, privacy breaches, or other harms arising from its use.
->
-> **Recommended minimum precautions before running:**
-> - Run in `--mode=dry-run` first and review all planned actions
-> - Keep the Flask port firewalled from external access
-> - Do not store credentials, keys, or sensitive files anywhere under this project directory
-> - Review `data/evolving_prompt.json` after every session
-> - Keep backups of any files the agent has write access to
+> **This project is experimental research software. Running it carries real, non-trivial risks.**
+> Autonomous execution, prompt injection, self-modifying prompts, and an unauthenticated web interface are all present by design.
+> Read the [Security Notice](#️-security-notice) section fully before proceeding.
 
 ---
 
 ## Table of Contents
 
-- [⚠ Security Notice](#-important-security-notice)
+- [⚠️ Security Notice](#️-security-notice)
 - [Overview](#overview)
 - [Features](#features)
 - [Architecture](#architecture)
@@ -54,6 +26,48 @@ UMBRA is a local-first autonomous AI agent with persistent memory, self-improvin
 - [Project Structure](#project-structure)
 - [Safety & Security](#safety--security)
 - [Development](#development)
+
+---
+
+## ⚠️ Security Notice
+
+> This is experimental research software. The risks below are real and present by design — not edge cases.
+
+### Autonomous Execution
+
+UMBRA runs a continuous decision loop with **minimal human intervention**. Once started in `--mode=live`, it takes actions autonomously — generating and potentially transmitting content — without per-step approval. Misconfiguration or a prompt-injection attack can cause behaviour you did not intend and may be difficult to reverse.
+
+### Prompt Injection
+
+UMBRA reads and processes external content (posts, comments, documents) as LLM input. Adversarially crafted content designed to hijack the agent's behaviour — **prompt injection** — is a real, documented attack class. The `Sentinel` subsystem provides partial mitigation but is **not a complete defence**. Treat all externally sourced content as potentially adversarial.
+
+### Self-Modifying Prompts
+
+The `PromptEvolver` system allows UMBRA to **rewrite its own system prompt** across generations. A degraded or manipulated evolution can change the agent's values, constraints, or engagement behaviour in ways that are difficult to notice until after the fact. Regularly review `data/evolving_prompt.json` and diff between generations.
+
+### No Authentication on the Web Interface
+
+`umbra_web.py` starts a Flask server on localhost with **no authentication by default**. Anyone with network access to the host can read chat history, trigger the autonomous loop, and issue control commands. Do not expose this port to an untrusted network or the internet without implementing proper authentication.
+
+### Local Filesystem Access
+
+The code agent (`core/code_agent.py`), self-improve system, and file inbox have direct access to your local filesystem. A prompt injection or logic error could result in unintended reads, writes, or deletions of files on your machine.
+
+### Unencrypted Local Data
+
+The `data/` directory accumulates memory, objectives, decision logs, conversations, and thought streams. **This data is not encrypted at rest.** Never commit it to version control or store it in a cloud-synced location. The `.gitignore` blocks these paths, but you are responsible for protecting the directory itself.
+
+### No Warranty
+
+This software is provided **as-is** for research and personal experimentation. The authors accept no responsibility for data loss, unintended content publication, privacy breaches, or other harms arising from its use.
+
+**Minimum precautions before running:**
+
+- Run `--mode=dry-run` first and review all planned actions before going live
+- Firewall the Flask port from any external network access
+- Do not store credentials, API keys, or sensitive personal files anywhere under this project directory
+- Review `data/evolving_prompt.json` after every session for unexpected prompt drift
+- Keep backups of any files the agent has write access to
 
 ---
 
