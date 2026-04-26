@@ -84,3 +84,6 @@ data/post_index.json
 
 # Optional local docs/history not needed for public repo
 data/comments/
+
+# Local model storage (keep out of git)
+models/
