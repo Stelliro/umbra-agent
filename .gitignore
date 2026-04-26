@@ -28,6 +28,19 @@ Thumbs.db
 *.indent_backup
 *.state_fix_backup
 
+# Binary artifacts and shortcuts
+*.exe
+*.dll
+*.bin
+*.lnk
+*.rar
+*.zip
+*.7z
+
+# Python bytecode/cache trees
+**/__pycache__/
+**/*.pyc
+
 # Local credentials/secrets
 credentials.json
 access_credentials.json
