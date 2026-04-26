@@ -11,6 +11,9 @@
 ### Removed
 - [BILD] Removed tracked shortcuts, binary artifacts, Python cache bytecode, and archive blobs from the repository to keep the public tree clean.
 
+### Added
+- [DOCS] Created comprehensive `README.md` covering all agent features, architecture, configuration, and project structure.
+
 ### Changed
 - [BILD] Hardened `.gitignore` to block `.lnk`, `.exe`, `.dll`, `.bin`, archive formats, and recursive Python cache artifacts from future commits.
 - [BILD] Added `models/` ignore rule and removed tracked `models` symlink so local model paths do not appear in the GitHub repository.
