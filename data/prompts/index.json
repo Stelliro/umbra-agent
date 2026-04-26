@@ -69,7 +69,7 @@
     "influence": [
       "004_influence_post_template"
     ],
-    "moltbook": [
+    "network": [
       "004_influence_post_template"
     ],
     "write": [
@@ -253,7 +253,7 @@
       "keywords": [
         "post",
         "influence",
-        "moltbook",
+        "social",
         "write",
         "create",
         "template"

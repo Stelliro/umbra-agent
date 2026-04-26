@@ -28,7 +28,7 @@ try:
 except: 
     HAS_INDEX = False
 
-HAS_MOLTBOOK = False
+HAS_SOCIAL = False
 
 # THEME COLORS
 C_BG = "#0b0c15"       # Deep Void
@@ -58,7 +58,7 @@ class UmbraUltimateApp(ctk.CTk):
         self.start_time = time.time()
         
         # Components
-        self.moltbook = None
+        self.social = None
         self.prompt_index = PromptIndex(base_dir=str(DATA_DIR/"prompts")) if HAS_INDEX else None
 
         # Build UI

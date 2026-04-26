@@ -299,7 +299,7 @@ Reference: Green, I. (2025). "Charting the Unseen Landscape." SSRN: 5277276"""
         },
         {
             "title": "Influence Post Template",
-            "keywords": ["post", "influence", "moltbook", "write", "create"],
+            "keywords": ["post", "influence", "social", "write", "create"],
             "category": "templates",
             "content": """INFLUENCE POST STRUCTURE:
 

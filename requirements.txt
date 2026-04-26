@@ -1,0 +1,15 @@
+# Core UI and web app
+customtkinter
+flask
+
+# LLM and model integration
+ollama
+llama-cpp-python
+
+# Data/network utilities
+requests
+pypdf
+colorama
+
+# Browser automation
+playwright

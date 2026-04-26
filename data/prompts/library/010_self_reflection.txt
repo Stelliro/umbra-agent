@@ -4,7 +4,7 @@ PURPOSE: Continuous improvement through structured self-analysis.
 
 WHEN TO REFLECT:
 - After significant interactions
-- After posting to Moltbook
+- After posting to social network
 - After receiving engagement (upvotes, comments)
 - Periodically during autonomous operation
 

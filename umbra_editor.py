@@ -45,7 +45,7 @@ for d in [DATA_DIR, PROMPTS_DIR, INBOX_DIR, INBOX_DIR / "processed", LOGS_DIR]:
 # Lazy imports
 HAS_INDEX = False
 HAS_INBOX = False
-HAS_MOLTBOOK = False
+HAS_SOCIAL = False
 HAS_OLLAMA = False
 
 try:
@@ -60,7 +60,7 @@ try:
 except ImportError:
     pass
 
-# Moltbook is intentionally disabled. Keep editor local-only.
+# UMBRA is intentionally disabled. Keep editor local-only.
 
 try:
     import ollama
@@ -104,7 +104,7 @@ class UmbraGUI(ctk.CTk):
         # Lazy components
         self.prompt_index = None
         self.inbox = None
-        self.moltbook = None
+        self.social = None
         self._evolver_loaded = False
         self.evolver = None
         
@@ -135,7 +135,7 @@ class UmbraGUI(ctk.CTk):
             except Exception as e:
                 print(f"Inbox error: {e}")
         
-        self.moltbook = None
+        self.social = None
     
     def _get_evolver(self):
         """Lazy load the evolver"""
@@ -183,7 +183,7 @@ class UmbraGUI(ctk.CTk):
         
         indicators = [
             ("ollama_status", "Ollama", HAS_OLLAMA),
-            ("moltbook_status", "Local-Only", True),
+            ("network_status", "Local-Only", True),
             ("chat_status", "Chat", False),
         ]
         
@@ -733,8 +733,8 @@ class UmbraGUI(ctk.CTk):
                 f"  Performance: {len(evolver.performance_log)} records", ""
             ])
         
-        lines.extend(["[MOLTBOOK]", "  Status: Disabled (local-only mode)", ""])
-        self.moltbook_status.configure(text_color=COLORS["success"])
+        lines.extend(["[NETWORK]", "  Status: Disabled (local-only mode)", ""])
+        self.network_status.configure(text_color=COLORS["success"])
         
         if self._loop:
             try:
@@ -878,16 +878,16 @@ class UmbraGUI(ctk.CTk):
             self.autonomous_thread = threading.Thread(target=run_loop, daemon=True)
             self.autonomous_thread.start()
     
-    def _check_moltbook(self):
-        """Check Moltbook status"""
-        self.moltbook_status.configure(text_color=COLORS["success"])
-        messagebox.showinfo("Local-Only", "Moltbook features are disabled in local-only mode.")
-        self._log("Moltbook check skipped (disabled)")
+    def _check_network(self):
+        """Check NETWORK STATUS"""
+        self.network_status.configure(text_color=COLORS["success"])
+        messagebox.showinfo("Local-Only", "UMBRA features are disabled in local-only mode.")
+        self._log("UMBRA check skipped (disabled)")
     
-    def _register_moltbook(self):
-        """Register on Moltbook with retry"""
-        messagebox.showinfo("Local-Only", "Registration is disabled. This build does not use Moltbook.")
-        self._log("Moltbook registration skipped (disabled)")
+    def _register_network(self):
+        """Register on UMBRA with retry"""
+        messagebox.showinfo("Local-Only", "Registration is disabled. This build does not use UMBRA.")
+        self._log("UMBRA registration skipped (disabled)")
     
     def _run_single_cycle(self):
         """Run single cycle"""

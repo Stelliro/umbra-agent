@@ -34,7 +34,7 @@ DELETE_PATTERNS = [
 # Never delete these
 PROTECTED = {
     "umbra_autonomous.py", "umbra_web.py", "umbra_state.py",
-    "moltbook_client.py", "sd_bridge.py",
+    "sd_bridge.py",
     "requirements.txt", "setup.py", "config.py",
     "README.md", "LICENSE",
 }

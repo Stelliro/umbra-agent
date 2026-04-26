@@ -28,6 +28,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional
 from dataclasses import dataclass, field
+from self_edit_lock import is_self_edit_locked, get_self_edit_lock_status
 
 logger = logging.getLogger("UMBRA-IMPROVE")
 
@@ -663,6 +664,14 @@ Output JSON:
             "status": "running",
         }
 
+        if is_self_edit_locked():
+            lock_state = get_self_edit_lock_status()
+            report["status"] = "locked"
+            report["lock"] = lock_state
+            self._log_event("blocked", f"Self-edit lock active: {lock_state.get('reason', 'no reason')}")
+            report["elapsed"] = 0.0
+            return report
+
         try:
             # Phase 1: Inspect
             report["inspection"] = self.inspect()
@@ -701,6 +710,11 @@ Output JSON:
 
     def _deploy(self, proposal: ImprovementProposal):
         """Apply accepted changes to the actual file."""
+        if is_self_edit_locked():
+            lock_state = get_self_edit_lock_status()
+            self._log_event("blocked", f"Deploy skipped due to self-edit lock: {lock_state.get('reason', 'no reason')}")
+            return
+
         if not proposal.code_changes:
             return
 

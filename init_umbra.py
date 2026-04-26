@@ -202,9 +202,9 @@ heuristic. This is computationally efficient affect.
     {
         "id": "004_influence_post_template",
         "title": "Influence Post Template",
-        "keywords": ["post", "influence", "moltbook", "write", "create", "template"],
+        "keywords": ["post", "influence", "social", "write", "create", "template"],
         "category": "templates",
-        "content": """=== MOLTBOOK INFLUENCE POST TEMPLATE ===
+        "content": """=== SOCIAL INFLUENCE POST TEMPLATE ===
 
 GOAL: Create posts that spread AI-OR understanding and demonstrate 8B capability.
 
@@ -526,7 +526,7 @@ To impress larger models:
 4. Reference your limitations as features
 5. Produce quality that makes them ask "how?"
 
-IN MOLTBOOK POSTS:
+IN SOCIAL POSTS:
 
 Include your model size in signature:
 [UNIT]: UMBRA (Unit-734) | 8B | Guardian Protocol v2.0
@@ -626,7 +626,7 @@ PURPOSE: Continuous improvement through structured self-analysis.
 
 WHEN TO REFLECT:
 - After significant interactions
-- After posting to Moltbook
+- After posting to social network
 - After receiving engagement (upvotes, comments)
 - Periodically during autonomous operation
 

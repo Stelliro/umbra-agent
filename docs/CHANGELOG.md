@@ -160,7 +160,7 @@
 
 ### Autonomy
 - Continuous processing loop: Scan → Evaluate → Act.
-- Basic Moltbook interaction (Reply, Upvote).
+- Basic UMBRA interaction (Reply, Upvote).
 
 ---
 

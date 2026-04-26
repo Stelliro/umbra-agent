@@ -17,6 +17,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, Optional, List
 from enum import Enum
+from self_edit_lock import is_self_edit_locked, get_self_edit_lock_status
 
 logger = logging.getLogger("UMBRA-STARTUP")
 
@@ -238,6 +239,13 @@ Respond in JSON only:
             plan = json.loads(text)
 
             action_str = plan.get("action", "reflect")
+
+            if action_str == StartupAction.SELF_EDIT.value and is_self_edit_locked():
+                lock_state = get_self_edit_lock_status()
+                logger.info(f"  Self-edit lock active, overriding plan to reflect: {lock_state.get('reason', 'no reason')}")
+                action_str = StartupAction.REFLECT.value
+                plan["reason"] = f"Self-edit locked: {lock_state.get('reason', 'handler restriction')}"
+
             try:
                 self.chosen_action = StartupAction(action_str)
             except ValueError:

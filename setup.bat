@@ -34,7 +34,7 @@ echo [*] Organizing files...
 
 if exist "umbra_autonomous.py" move "umbra_autonomous.py" "core\" >nul 2>&1
 if exist "umbra_integration.py" move "umbra_integration.py" "core\" >nul 2>&1
-if exist "moltbook_client.py" move "moltbook_client.py" "core\" >nul 2>&1
+rem social network client removed - integration disabled
 if exist "prompt_index.py" move "prompt_index.py" "core\" >nul 2>&1
 if exist "file_inbox.py" move "file_inbox.py" "core\" >nul 2>&1
 if exist "uplink_v2.py" move "uplink_v2.py" "core\" >nul 2>&1
@@ -44,7 +44,7 @@ if exist "Charting_the_Unseen_Landscape.pdf" move "Charting_the_Unseen_Landscape
 if exist "Charting the Unseen Landscape.pdf" move "Charting the Unseen Landscape.pdf" "research\" >nul 2>&1
 
 :: Move persona file
-if exist "moltbook_persona.json" move "moltbook_persona.json" "data\" >nul 2>&1
+if exist "umbra_persona.json" move "umbra_persona.json" "data\" >nul 2>&1
 
 :: Create __init__.py for core module
 echo # UMBRA Core Module > core\__init__.py

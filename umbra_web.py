@@ -26,6 +26,7 @@ except ImportError: HAS_ALERTS = False
 
 from chat_store import ChatStore
 from code_agent import CodeAgent
+from self_edit_lock import is_self_edit_locked, get_self_edit_lock_status
 
 try: from auth import AuthManager; HAS_AUTH = True
 except ImportError: HAS_AUTH = False
@@ -403,6 +404,7 @@ def api_read(): return jsonify({"content": agent.read_file(request.args.get('pat
 @app.route('/api/dashboard')
 def api_dash():
     d = {"status": SYS["status"], "chats": len(store.list_chats())}
+    d["self_edit_locked"] = is_self_edit_locked()
     if SYS["loop"]: d.update(SYS["loop"].stats)
     return jsonify(d)
 @app.route('/api/logs')
@@ -483,6 +485,9 @@ def api_change_username():
 def api_improve_start():
     global _improve_status, _improve_report
     if not HAS_IMPROVE: return jsonify({"error": "self_improve.py not found"})
+    if is_self_edit_locked():
+        lock_state = get_self_edit_lock_status()
+        return jsonify({"error": "Self-edit is locked", "lock": lock_state}), 423
     if _improve_status.get("phase") not in ("idle","complete","error"): return jsonify({"error": "Running"})
     def _run():
         global _improve_status, _improve_report

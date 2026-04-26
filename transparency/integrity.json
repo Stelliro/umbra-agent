@@ -5,7 +5,7 @@
     "note": "v0.8.0 Glass Box - Initial Snapshot",
     "h": {
       "core\\file_inbox.py": "1c19de0bcc831d4c",
-      "core\\moltbook_client.py": "88017f939642dcd5",
+      
       "core\\prompt_index.py": "bfe0e2b5591e8b0d",
       "core\\sd_bridge.py": "2aabb8a3143c08e6",
       "core\\umbra_autonomous.py": "290f9e6f707ebf53",

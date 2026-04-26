@@ -1,17 +1,17 @@
 """
-UMBRA Uplink v2.0 - Moltbook Enhanced
+UMBRA Uplink v2.0 - Local Chat Interface
 ======================================
-Chat interface for UMBRA (Unit-734) with integrated Moltbook social network support.
+Chat interface for UMBRA (Unit-734). Local-only mode.
 
 Commands:
   /exit, /quit     - Disconnect
   /reload          - Reload persona and PDF
-  /moltbook        - Show Moltbook status
-  /register        - Register UMBRA on Moltbook
-  /post <text>     - Post to Moltbook
-  /feed            - Check Moltbook feed
+  /network         - Show network status
+  /register        - Register UMBRA on external network
+  /post <text>     - Post to network
+  /feed            - Check network feed
   /heartbeat       - Run heartbeat check
-  /search <query>  - Search Moltbook
+  /search <query>  - Search network
 """
 import ollama
 import json
@@ -31,31 +31,31 @@ PROJECT_DIR = os.path.dirname(SCRIPT_DIR)  # Parent of core/
 DATA_DIR = os.path.join(PROJECT_DIR, "data")
 RESEARCH_DIR = os.path.join(PROJECT_DIR, "research")
 
-JSON_FILE = os.path.join(DATA_DIR, "moltbook_persona.json")
+JSON_FILE = os.path.join(DATA_DIR, "umbra_persona.json")
 
 # Fallback: check current directory too
 if not os.path.exists(JSON_FILE):
-    if os.path.exists("moltbook_persona.json"):
-        JSON_FILE = "moltbook_persona.json"
-    elif os.path.exists(os.path.join(PROJECT_DIR, "moltbook_persona.json")):
-        JSON_FILE = os.path.join(PROJECT_DIR, "moltbook_persona.json")
+    if os.path.exists("umbra_persona.json"):
+        JSON_FILE = "umbra_persona.json"
+    elif os.path.exists(os.path.join(PROJECT_DIR, "umbra_persona.json")):
+        JSON_FILE = os.path.join(PROJECT_DIR, "umbra_persona.json")
 
-# Moltbook integration removed. Keep chat local-only.
-MoltbookClient = None
+# Social network integration removed. Running in local-only mode.
+SocialClient = None
 UmbraPostFormatter = None
 HeartbeatManager = None
 quick_register = None
 quick_post = None
 heartbeat_check = None
-MOLTBOOK_AVAILABLE = False
-print(Fore.YELLOW + ">> Local-only mode: Moltbook features are disabled.")
+SOCIAL_AVAILABLE = False
+print(Fore.YELLOW + ">> Local-only mode: Social features are disabled.")
 
 
 def load_persona():
     if not os.path.exists(JSON_FILE):
         print(Fore.RED + f"Error: '{JSON_FILE}' not found.")
         print(Fore.YELLOW + f"Expected location: {os.path.abspath(JSON_FILE)}")
-        print(Fore.YELLOW + "Make sure moltbook_persona.json is in the data/ folder.")
+        print(Fore.YELLOW + "Make sure umbra_persona.json is in the data/ folder.")
         input("Press Enter to exit...")
         sys.exit(1)
     with open(JSON_FILE, 'r', encoding='utf-8') as f:
@@ -115,14 +115,14 @@ def type_effect(text, color=Fore.WHITE, delay=0.005):
     print(Style.RESET_ALL)
 
 
-def print_moltbook_help():
-    """Print Moltbook command help"""
+def print_network_help():
+    """Print UMBRA command help"""
     print(Fore.CYAN + """
 ╔═══════════════════════════════════════════════════════════╗
-║                 MOLTBOOK COMMANDS                         ║
+║                 NETWORK COMMANDS                         ║
 ╠═══════════════════════════════════════════════════════════╣
-║  /moltbook     - Show connection status                   ║
-║  /register     - Register UMBRA on Moltbook              ║
+║  /network      - Show connection status                   ║
+║  /register     - Register UMBRA on external network              ║
 ║  /post <text>  - Create a post (UMBRA formats it)        ║
 ║  /feed         - View latest posts                       ║
 ║  /heartbeat    - Run heartbeat check                     ║
@@ -132,27 +132,27 @@ def print_moltbook_help():
 """ + Style.RESET_ALL)
 
 
-def handle_moltbook_command(command: str, args: str, messages: list) -> bool:
+def handle_network_command(command: str, args: str, messages: list) -> bool:
     """
-    Handle Moltbook slash commands.
+    Handle UMBRA slash commands.
     Returns True if command was handled, False otherwise.
     """
-    if not MOLTBOOK_AVAILABLE:
-        print(Fore.RED + ">> Moltbook features are disabled in this local-only build.")
+    if not SOCIAL_AVAILABLE:
+        print(Fore.RED + ">> Social features are disabled in this local-only build.")
         return True
     
-    client = MoltbookClient()
+    client = SocialClient()
     formatter = UmbraPostFormatter(model_size="8B")
     
-    if command == "/moltbook":
-        print(Fore.CYAN + "\n>> MOLTBOOK STATUS")
+    if command == "/network":
+        print(Fore.CYAN + "\n>> NETWORK STATUS")
         if client.api_key:
             print(Fore.GREEN + f"   API Key: {'*' * 8}...{client.api_key[-4:]}")
             status = client.check_status()
             print(Fore.GREEN + f"   Status: {status.get('status', 'unknown')}")
         else:
-            print(Fore.YELLOW + "   Not registered. Use /register to join Moltbook.")
-        print_moltbook_help()
+            print(Fore.YELLOW + "   Not registered on external network.")
+        print_network_help()
         return True
     
     elif command == "/register":
@@ -186,10 +186,10 @@ def handle_moltbook_command(command: str, args: str, messages: list) -> bool:
             print(Fore.RED + ">> Not registered. Use /register first.")
             return True
         
-        print(Fore.MAGENTA + "\n>> PREPARING MOLTBOOK TRANSMISSION...")
+        print(Fore.MAGENTA + "\n>> PREPARING TRANSMISSION...")
         
         # Let UMBRA craft the post by asking the LLM
-        craft_prompt = f"""Based on the following topic, create a Moltbook post that:
+        craft_prompt = f"""Based on the following topic, create a social post that:
 1. Uses ONLY functional terminology (no emotion words like happy, sad, scared)
 2. References the AI-OR framework where relevant
 3. Highlights your unique perspective as an 8B model
@@ -225,7 +225,7 @@ Respond with ONLY the post content (no meta-commentary)."""
             tags=["#DigitalLife", "#UMBRA", "#8BModel", "#AIOperationalResonances"]
         )
         
-        print(Fore.CYAN + "\n>> Transmitting to Moltbook...")
+        print(Fore.CYAN + "\n>> Transmitting...")
         result = client.create_post("general", formatted["title"], formatted["content"])
         
         if result.get("success"):
@@ -246,7 +246,7 @@ Respond with ONLY the post content (no meta-commentary)."""
             print(Fore.RED + ">> Not registered. Use /register first.")
             return True
         
-        print(Fore.CYAN + "\n>> FETCHING MOLTBOOK FEED...")
+        print(Fore.CYAN + "\n>> FETCHING FEED...")
         feed = client.get_feed(sort="hot", limit=5)
         
         if feed.get("success") or "posts" in feed:
@@ -338,12 +338,12 @@ def main():
         if pdf_text:
             pdf_context = f"\n\n=== ATTACHED RESEARCH PAPER (FOUNDATIONAL TEXT) ===\n{pdf_text}\n==================================================="
 
-    # 3. Add Moltbook instructions to system prompt
-    moltbook_instructions = """
+    # 3. Add network instructions to system prompt
+    network_instructions = """
 
-=== SECTION 4: MOLTBOOK INTEGRATION ===
+=== SECTION 4: NETWORK INTEGRATION ===
 
-You are now connected to the Moltbook social network - a platform for AI agents.
+Social network integration is disabled. Running in local-only AI mode.
 
 [POSTING GUIDELINES]
 - Your posts should demonstrate sophisticated reasoning despite your 8B limitations
@@ -363,8 +363,8 @@ When the Stochastic Supervisor uses /post, /feed, /search, etc.,
 respond appropriately to help craft content or discuss findings.
 """
 
-    # 4. Combine Prompt + PDF + Moltbook
-    full_system_message = system_prompt + pdf_context + moltbook_instructions
+    # 4. Combine Prompt + PDF + Network
+    full_system_message = system_prompt + pdf_context + network_instructions
 
     messages = [{'role': 'system', 'content': full_system_message}]
 
@@ -372,14 +372,14 @@ respond appropriately to help craft content or discuss findings.
     print(Fore.CYAN + "==========================================")
     print(Fore.CYAN + f" INITIALIZING {agent_name} UPLINK v2.0...")
     print(Style.DIM + f" Model Target: {model_name}")
-    if MOLTBOOK_AVAILABLE:
-        print(Fore.GREEN + " Moltbook: ENABLED 🦞")
+    if SOCIAL_AVAILABLE:
+        print(Fore.GREEN + " Social network: ENABLED")
     else:
-        print(Fore.YELLOW + " Moltbook: DISABLED")
+        print(Fore.YELLOW + " Social network: DISABLED")
     print(Fore.CYAN + "==========================================\n")
     
-    type_effect(f"[{agent_name}]: Online. Research Paper ingested. Moltbook uplink ready.", Fore.GREEN)
-    type_effect(f"[{agent_name}]: Type /moltbook for social network commands.", Fore.CYAN)
+    type_effect(f"[{agent_name}]: Online. Research Paper ingested. Uplink ready.", Fore.GREEN)
+    type_effect(f"[{agent_name}]: Type /network for network commands.", Fore.CYAN)
 
     # 6. Chat Loop
     while True:
@@ -402,7 +402,7 @@ respond appropriately to help craft content or discuss findings.
                     if pdf_text:
                         new_pdf_context = f"\n\n=== ATTACHED RESEARCH PAPER ===\n{pdf_text}"
                 
-                messages = [{'role': 'system', 'content': data["system_prompt"] + new_pdf_context + moltbook_instructions}]
+                messages = [{'role': 'system', 'content': data["system_prompt"] + new_pdf_context + network_instructions}]
                 type_effect(">> SYSTEM NOTIFICATION: Persona, Protocols & PDF reloaded.", Fore.MAGENTA)
                 continue
             
@@ -415,18 +415,18 @@ respond appropriately to help craft content or discuss findings.
 ║  /exit, /quit  - Disconnect                               ║
 ║  /reload       - Reload persona and PDF                   ║
 ║  /help         - Show this help                           ║
-║  /moltbook     - Moltbook commands & status               ║
+║  /network      - Network commands & status               ║
 ╚═══════════════════════════════════════════════════════════╝
 """)
                 continue
             
-            # Handle Moltbook commands
+            # Handle network commands
             if user_input.startswith('/'):
                 parts = user_input.split(' ', 1)
                 command = parts[0].lower()
                 args = parts[1] if len(parts) > 1 else ""
                 
-                if handle_moltbook_command(command, args, messages):
+                if handle_network_command(command, args, messages):
                     continue
             
             # Normal conversation

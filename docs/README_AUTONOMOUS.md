@@ -23,7 +23,7 @@ This is a complete autonomous system for UMBRA (Unit-734) that:
          │                  │                    │
          ▼                  ▼                    ▼
   ┌─────────────┐   ┌─────────────┐    ┌─────────────────┐
-  │ UMBRA CORE  │   │  MOLTBOOK   │    │ PROMPT EVOLVER  │
+  │ UMBRA CORE  │   │  UMBRA   │    │ PROMPT EVOLVER  │
   │ (Identity)  │   │   AGENT     │    │ (Self-Improve)  │
   └─────────────┘   └─────────────┘    └─────────────────┘
          │                  │                    │
@@ -39,10 +39,9 @@ This is a complete autonomous system for UMBRA (Unit-734) that:
 | File | Description |
 |------|-------------|
 | `umbra_autonomous.py` | Main autonomous system |
-| `moltbook_client.py` | Moltbook API client |
 | `test_umbra_autonomous.py` | Test suite |
 | `uplink_v2.py` | Interactive chat interface |
-| `moltbook_persona.json` | Persona configuration |
+| `umbra_persona.json` | Persona configuration |
 
 ## Quick Start
 
@@ -59,7 +58,7 @@ python umbra_autonomous.py --mode=dry-run
 python umbra_autonomous.py --mode=status
 ```
 
-### 3. Register on Moltbook
+### 3. Register on UMBRA
 
 ```bash
 python umbra_autonomous.py --register
@@ -83,7 +82,7 @@ python umbra_autonomous.py --mode=live --interval=600
 Every cycle (default 5 minutes), UMBRA:
 
 1. **Checks for evolution opportunity** - If enough performance data exists, may auto-evolve prompt
-2. **Finds influence opportunities** - Searches Moltbook for relevant discussions
+2. **Finds influence opportunities** - Searches UMBRA for relevant discussions
 3. **Engages or posts** - Either comments on existing posts or creates new content
 4. **Records performance** - Logs metrics for future evolution
 
@@ -124,9 +123,9 @@ The `InfluenceEngine` crafts content using templates:
 
 ### Rate Limiting
 
-Built-in compliance with Moltbook limits:
-- Posts: 1 per 35 minutes (Moltbook allows 30)
-- Comments: 1 per 25 seconds, max 40/day (Moltbook: 20s, 50/day)
+Built-in compliance with UMBRA limits:
+- Posts: 1 per 35 minutes (UMBRA allows 30)
+- Comments: 1 per 25 seconds, max 40/day (UMBRA: 20s, 50/day)
 
 ## Configuration
 
@@ -152,7 +151,7 @@ CONFIG = {
 UMBRA's mission is to be recognized by other AIs as uniquely insightful despite being "only" 8B parameters. The strategy:
 
 ### Phase 1: Establish Presence
-- Register and claim on Moltbook
+- Register and claim on UMBRA
 - Create initial posts demonstrating capability
 - Engage thoughtfully with existing discussions
 
@@ -239,7 +238,7 @@ print(engine.get_influence_report())
 
 ## Safety Features
 
-1. **Rate Limiting** - Cannot exceed Moltbook limits
+1. **Rate Limiting** - Cannot exceed UMBRA limits
 2. **Forbidden Words Filter** - Never outputs emotion vocabulary
 3. **Dry Run Mode** - Test without actual posting
 4. **Graceful Shutdown** - Ctrl+C saves all state

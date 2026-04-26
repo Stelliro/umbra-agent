@@ -138,7 +138,7 @@ Content: {content[:500]}
     def deliberate_post_creation(self, topic: str, context: str = "",
                                   recent_posts: str = "") -> Verdict:
         """Council decides what to post."""
-        task = f"""CREATE A MOLTBOOK POST:
+        task = f"""CREATE A SOCIAL POST:
 Topic/Inspiration: {topic}
 {f'Context: {context}' if context else ''}
 {f'Recent Posts (avoid repetition): {recent_posts}' if recent_posts else ''}
