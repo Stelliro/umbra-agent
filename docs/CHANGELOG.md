@@ -6,6 +6,14 @@
 
 ---
 
+## [Unreleased]
+
+### Removed
+- [BILD] Removed tracked shortcuts, binary artifacts, Python cache bytecode, and archive blobs from the repository to keep the public tree clean.
+
+### Changed
+- [BILD] Hardened `.gitignore` to block `.lnk`, `.exe`, `.dll`, `.bin`, archive formats, and recursive Python cache artifacts from future commits.
+
 ## v1.0.0 - "Phoenix" (Current)
 
 ### Standalone Inference Engine (`core/umbra_engine.py`)
