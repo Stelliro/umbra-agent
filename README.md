@@ -478,4 +478,15 @@ See [docs/CHANGELOG.md](docs/CHANGELOG.md).
 
 ## License
 
-Private — all rights reserved.
+Copyright © 2026 Stelliro. All rights reserved.
+
+This project is licensed under a **proprietary, non-commercial, no-derivatives** license.
+
+- **Viewing and personal, non-commercial use** of the source code is permitted.
+- **Commercial use of any kind is strictly prohibited** — including but not limited to running this software as part of a paid service, incorporating it into a commercial product, or using it to generate revenue.
+- **Modification, adaptation, or creation of derivative works is prohibited** without prior written permission from the author.
+- **Redistribution** of the source code or compiled forms, with or without modification, is prohibited.
+
+For licensing inquiries, contact the repository owner via GitHub.
+
+See the [LICENSE](LICENSE) file for the full terms.
