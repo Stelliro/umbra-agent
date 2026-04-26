@@ -85,5 +85,20 @@ data/post_index.json
 # Optional local docs/history not needed for public repo
 data/comments/
 
+# Runtime state and event streams
+data/self_edit_lock.json
+data/ui_memory_stream.jsonl
+data/ui_thought_stream.jsonl
+
+# Agent persona (contains operator personal details - keep local only)
+data/umbra_persona.json
+data/moltbook_persona.json
+
+# Personal/historical chat logs
+docs/OH GOD.txt
+
+# Inbox instruction files
+data/inbox/
+
 # Local model storage (keep out of git)
 models/
