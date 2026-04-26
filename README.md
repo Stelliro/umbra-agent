@@ -6,8 +6,44 @@ UMBRA is a local-first autonomous AI agent with persistent memory, self-improvin
 
 ---
 
+> [!CAUTION]
+> ## ⚠ IMPORTANT SECURITY NOTICE
+>
+> **This project is experimental research software. Running it carries real, non-trivial risks. Read this section before proceeding.**
+>
+> ### Autonomous Execution
+> UMBRA is designed to run a continuous decision loop with **minimal human intervention**. Once started in `--mode=live`, it will take actions autonomously — generating and potentially transmitting content — without asking for approval on each step. Misconfiguration or a prompt-injection attack can cause it to behave in ways you did not intend.
+>
+> ### Prompt Injection
+> UMBRA reads and processes external content (posts, comments, documents) as LLM input. Malicious content crafted to manipulate the agent's behaviour — **prompt injection** — is a real and documented attack class. The `Sentinel` subsystem provides partial mitigation, but it is **not a complete defence**. Assume any externally sourced content is potentially adversarial.
+>
+> ### Self-Modifying Prompts
+> The `PromptEvolver` system allows UMBRA to **rewrite its own system prompt** across generations. A sufficiently degraded or manipulated evolution could change the agent's values, constraints, or engagement behaviour in ways that are difficult to detect until after the fact. Monitor `data/evolving_prompt.json` and review generation diffs regularly.
+>
+> ### Web Interface Has No Authentication by Default
+> `umbra_web.py` starts a Flask server on localhost. **There is no authentication enabled out of the box.** Anyone with network access to the host machine can read chat history, trigger the autonomous loop, and issue control commands. Do not expose this port to an untrusted network or the public internet without implementing proper auth.
+>
+> ### Local File System Access
+> The code agent (`core/code_agent.py`), self-improve system, and file inbox have access to your local filesystem. A prompt injection or logic error could result in unintended reads, writes, or deletions of local files.
+>
+> ### Personal Data in `data/`
+> The `data/` directory accumulates memory, objectives, decision logs, handler conversations, and thought streams during normal operation. **This data is not encrypted at rest.** It should never be committed to version control or stored in a shared or cloud-synced location. The `.gitignore` blocks these files, but you are responsible for protecting the directory itself.
+>
+> ### No Warranty
+> This software is provided **as-is** for research and personal experimentation. The authors accept no responsibility for data loss, unintended content publication, privacy breaches, or other harms arising from its use.
+>
+> **Recommended minimum precautions before running:**
+> - Run in `--mode=dry-run` first and review all planned actions
+> - Keep the Flask port firewalled from external access
+> - Do not store credentials, keys, or sensitive files anywhere under this project directory
+> - Review `data/evolving_prompt.json` after every session
+> - Keep backups of any files the agent has write access to
+
+---
+
 ## Table of Contents
 
+- [⚠ Security Notice](#-important-security-notice)
 - [Overview](#overview)
 - [Features](#features)
 - [Architecture](#architecture)
