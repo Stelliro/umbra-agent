@@ -17,6 +17,7 @@ sys.path.append(str(BASE_DIR / 'core'))
 try:
     from umbra_engine import get_engine, OllamaCompat
     _engine = get_engine(models_dir=str(BASE_DIR / "models"))
+    _engine.start()  # without the worker, offline chat would wait forever
     UMBRA_ENGINE_OBJ = OllamaCompat(_engine)
 except ImportError:
     UMBRA_ENGINE_OBJ = None
@@ -39,7 +40,16 @@ DATA_DIR = BASE_DIR / "data"
 LOGS_DIR = DATA_DIR / "logs"
 for d in [DATA_DIR, LOGS_DIR]: d.mkdir(parents=True, exist_ok=True)
 
-auth_mgr = AuthManager(str(DATA_DIR)) if HAS_AUTH else None
+# Sandboxed mode (run_umbra.sh): the app listens on a private unix socket and the
+# gatekeeper OUTSIDE the sandbox checks the login, so the login file never enters it.
+UMBRA_SOCKET = os.environ.get("UMBRA_SOCKET")
+if UMBRA_SOCKET:
+    auth_mgr = None
+elif not HAS_AUTH:
+    # Never run the web UI without a login
+    sys.exit("[UMBRA] core/auth.py failed to import; refusing to start without login.")
+else:
+    auth_mgr = AuthManager()  # ~/.config/umbra/login.json, outside anything UMBRA can read
 store = ChatStore(str(DATA_DIR))
 agent = CodeAgent(project_dir=str(BASE_DIR), ollama=UMBRA_ENGINE_OBJ, model="qwen2.5-coder")
 
@@ -68,30 +78,11 @@ _tunnel_url = None
 def _llm():
     return UMBRA_ENGINE_OBJ
 
-def _offline_respond(chat_id, message):
-    llm = _llm()
-    if HAS_THINKING and llm:
-        try:
-            engine = ThinkingEngine(ollama=llm, model="llama3")
-            chain = engine.think(message, depth="normal")
-            if chain.final_response:
-                store.add_message(chat_id, "umbra", chain.final_response)
-                return
-        except: pass
-    if llm:
-        try:
-            resp = llm.generate(model="llama3", prompt=message)
-            text = resp.get("response", "").strip()
-            if text:
-                store.add_message(chat_id, "umbra", text)
-                return
-        except: pass
-    store.add_message(chat_id, "umbra", "Offline. Start the system for full responses.")
-
 def run_loop_thread():
     try:
-        SYS["status"] = "ONLINE"
+        SYS["status"] = "STARTING"
         SYS["loop"] = AutonomousLoop(dry_run=False)
+        SYS["status"] = "ONLINE"  # only once the loop exists, so chat never races it
         SYS["loop"].run()
     except Exception as e:
         SYS["status"] = "ERROR"; SYS["err"] = str(e)
@@ -231,22 +222,26 @@ function go(v){
   if(v==='logs') loadLogs();
 }
 
+// Model output is shown as text only: it must never become HTML/JS in the browser
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
 // CHAT
 async function loadChats(){
   const cs=await(await fetch('/api/chats')).json();
-  document.getElementById('cl-items').innerHTML=cs.map(c=>`<div class="cl-item ${c.id===curChat?'sel':''}" onclick="openChat('${c.id}')">${c.title||'Chat'}</div>`).join('');
+  document.getElementById('cl-items').innerHTML=cs.map(c=>`<div class="cl-item ${c.id===curChat?'sel':''}" onclick="openChat('${esc(c.id)}')">${esc(c.title||'Chat')}</div>`).join('');
 }
 async function newChat(){const r=await(await fetch('/api/chats/create',{method:'POST'})).json();openChat(r.id)}
 async function openChat(id){
   curChat=id;loadChats();
   const msgs=await(await fetch(`/api/chats/${id}/messages`)).json();
   const el=document.getElementById('cm-msgs');
-  el.innerHTML=msgs.map(m=>`<div class="msg ${m.role==='handler'?'u':'a'}">${m.content}</div>`).join('');
+  el.innerHTML=msgs.map(m=>`<div class="msg ${m.role==='handler'?'u':'a'}" style="white-space:pre-wrap">${esc(m.content)}</div>`).join('');
   el.scrollTop=el.scrollHeight;
 }
 async function send(){
   var i=document.getElementById('msg-in'),btn=i.nextElementSibling;
-  if(!i.value.trim()||!curChat||btn.disabled)return;
+  if(!i.value.trim()||btn.disabled)return;
+  if(!curChat){await newChat();}  // typing with no chat open starts a new one
   btn.disabled=true;btn.textContent='...';
   var txt=i.value;i.value='';
   try{
@@ -276,8 +271,8 @@ async function refreshTree(sub='.'){
   if(sub!=='.') h+=`<div class="tr-item dir" onclick="refreshTree('${sub.split('/').slice(0,-1).join('/')||'.'}')">📁 ..</div>`;
   if(d.items) d.items.forEach(i=>{
     const full=sub==='.'?i.name:`${sub}/${i.name}`;
-    if(i.type==='dir') h+=`<div class="tr-item dir" onclick="refreshTree('${full}')">📁 ${i.name}</div>`;
-    else h+=`<div class="tr-item file" onclick="loadFile('${full}')">📄 ${i.name}</div>`;
+    if(i.type==='dir') h+=`<div class="tr-item dir" onclick="refreshTree('${esc(full)}')">📁 ${esc(i.name)}</div>`;
+    else h+=`<div class="tr-item file" onclick="loadFile('${esc(full)}')">📄 ${esc(i.name)}</div>`;
   });
   el.innerHTML=h;
 }
@@ -290,7 +285,7 @@ async function loadFile(p){
 // DASH
 async function loadDash(){
   const d=await(await fetch('/api/dashboard')).json();
-  document.getElementById('dash-grid').innerHTML=Object.entries(d).map(([k,v])=>`<div class="stat"><div style="font-size:10px;color:#888">${k.toUpperCase()}</div><div style="font-size:20px;font-weight:bold">${v}</div></div>`).join('');
+  document.getElementById('dash-grid').innerHTML=Object.entries(d).map(([k,v])=>`<div class="stat"><div style="font-size:10px;color:#888">${esc(k.toUpperCase())}</div><div style="font-size:20px;font-weight:bold">${esc(v)}</div></div>`).join('');
   document.getElementById('sys-btn').innerText=d.status==='ONLINE'?'STOP SYSTEM':'START SYSTEM';
 }
 async function toggleSys(){
@@ -366,6 +361,53 @@ async function toggleTunnel(){
 @app.route('/')
 def home(): return render_template_string(HTML)
 
+# Replies come back on one queue; route each to the chat that sent it (by message_id),
+# so a slow reply lands on its own message instead of the next one.
+_pending_chats = {}
+_pending_lock = threading.Lock()
+_router_started = False
+_last_chat = {"id": None}
+OUTBOX_FILE = BASE_DIR / "env" / "outbox" / "messages.jsonl"
+
+def _deliver_outbox(state):
+    """Show UMBRA's message_handler messages in the chat the handler used last."""
+    try:
+        lines = OUTBOX_FILE.read_text(encoding="utf-8").splitlines() if OUTBOX_FILE.exists() else []
+    except Exception:
+        return
+    if state["seen"] is None:
+        state["seen"] = len(lines)  # don't replay old messages on restart
+        return
+    for line in lines[state["seen"]:]:
+        try:
+            m = json.loads(line)
+        except Exception:
+            continue
+        cid = _last_chat["id"] or store.create_chat()
+        _last_chat["id"] = cid
+        store.add_message(cid, "umbra", f"[MESSAGE FROM UMBRA · {m.get('kind', 'general')}] {m.get('text', '')}")
+    state["seen"] = len(lines)
+
+def _ensure_reply_router():
+    global _router_started
+    with _pending_lock:
+        if _router_started: return
+        _router_started = True
+    def _route():
+        outbox_state = {"seen": None}
+        while True:
+            _deliver_outbox(outbox_state)
+            loop = SYS.get("loop")
+            resp = loop.get_chat_response(timeout=1) if loop else None
+            if not resp:
+                if not loop: time.sleep(1)
+                continue
+            with _pending_lock:
+                chat_id = _pending_chats.pop(resp.get("message_id"), None)
+            if chat_id:
+                store.add_message(chat_id, "umbra", resp.get("response") or "[SYSTEM] Empty reply.")
+    threading.Thread(target=_route, daemon=True, name="reply-router").start()
+
 @app.route('/api/chats')
 def api_chats(): return jsonify(store.list_chats())
 @app.route('/api/chats/create', methods=['POST'])
@@ -376,20 +418,8 @@ def api_msgs(cid): return jsonify(store.get_messages(cid))
 def api_send(cid):
     msg = request.json.get('message')
     store.add_message(cid, "handler", msg)
-    if SYS["status"] == "ONLINE" and SYS["loop"]:
-        SYS["loop"].send_chat(msg)
-        def _wait(chat_id):
-            try:
-                resp = SYS["loop"].get_chat_response(timeout=120)
-                if resp and resp.get("response"):
-                    store.add_message(chat_id, "umbra", resp["response"])
-                else:
-                    store.add_message(chat_id, "umbra", "Processed but no response generated.")
-            except Exception as e:
-                store.add_message(chat_id, "umbra", f"Error: {e}")
-        threading.Thread(target=_wait, args=(cid,), daemon=True).start()
-    else:
-        _offline_respond(cid, msg)
+    # Always UMBRA: if it isn't running yet, sending starts it (no plain-model "offline" replies)
+    threading.Thread(target=_deliver_when_online, args=(cid, msg), daemon=True).start()
     return jsonify({"success": True})
 
 @app.route('/api/agent/root_info')
@@ -413,18 +443,47 @@ def api_logs():
     lf = list(LOGS_DIR.glob("*.log"))
     if not lf: return jsonify([])
     return jsonify([{"time": "00:00", "msg": l} for l in lf[0].read_text().splitlines()[-50:]])
+_start_lock = threading.Lock()
+
+def _start_loop():
+    """Start UMBRA's loop unless it is already running or starting (never two at once)."""
+    with _start_lock:
+        t = SYS.get("thread")
+        if t and t.is_alive():
+            return
+        SYS["thread"] = threading.Thread(target=run_loop_thread, daemon=True)
+        SYS["thread"].start()
+
+def _deliver_when_online(cid, msg):
+    """Start UMBRA if needed, wait until it is up, then hand it the message."""
+    _start_loop()
+    for _ in range(180):
+        if SYS["status"] == "ONLINE" and SYS["loop"]:
+            break
+        if SYS["status"] == "ERROR":
+            store.add_message(cid, "umbra", f"[SYSTEM] UMBRA failed to start: {SYS.get('err', 'unknown error')}")
+            return
+        time.sleep(1)
+    else:
+        store.add_message(cid, "umbra", "[SYSTEM] UMBRA did not start within 3 minutes. Check the terminal.")
+        return
+    _last_chat["id"] = cid
+    msg_id = SYS["loop"].send_chat(msg)
+    with _pending_lock:
+        _pending_chats[msg_id] = cid
+    _ensure_reply_router()
+
 @app.route('/api/control', methods=['POST'])
 def api_ctrl():
     act = request.json.get('action')
     if act == 'start':
-        SYS["thread"] = threading.Thread(target=run_loop_thread, daemon=True)
-        SYS["thread"].start()
+        _start_loop()
     elif act == 'stop' and SYS["loop"]: SYS["loop"].shutdown()
     return jsonify({"success": True})
 # === Auth ===
 @app.before_request
 def require_login():
-    if not HAS_AUTH: return
+    if UMBRA_SOCKET: return  # the gatekeeper already checked the login
     if request.endpoint in ('login', 'static'): return
     token = request.cookies.get('umbra_session')
     if not auth_mgr.validate_session(token):
@@ -434,7 +493,7 @@ def require_login():
 
 @app.route('/login', methods=['GET','POST'])
 def login():
-    if not HAS_AUTH: return redirect('/')
+    if not auth_mgr: return redirect('/')  # sandboxed: login happens at the gatekeeper
     if request.method == 'POST':
         u, p = request.form.get('username'), request.form.get('password')
         token = auth_mgr.login(u, p)
@@ -510,6 +569,8 @@ def api_improve_report(): return jsonify(json.loads(json.dumps(_improve_report o
 @app.route('/api/tunnel/start', methods=['POST'])
 def api_tunnel_start():
     global _tunnel_obj, _tunnel_url
+    # Public tunnel disabled: UMBRA stays on this machine only
+    return jsonify({"error": "Tunnel is disabled in this build"})
     if not HAS_TUNNEL: return jsonify({"error": "tunnel.py not found"})
     if _tunnel_obj and _tunnel_url: return jsonify({"url": _tunnel_url})
     _tunnel_obj = Tunnel(port=5000); _tunnel_url = _tunnel_obj.start()
@@ -531,5 +592,11 @@ if __name__ == '__main__':
     if auth_mgr:
         creds = auth_mgr._load()
         print(f"[UMBRA] Login: {creds.get('username','admin')} / {'*'*len(creds.get('password',''))}")
-    print("[UMBRA] UNIFIED DASHBOARD + EXPLORER RUNNING ON http://localhost:5000")
-    app.run(host='0.0.0.0', port=5000, threaded=True, use_reloader=False)
+    if UMBRA_SOCKET:
+        os.umask(0o077)  # socket file usable by this user only
+        if os.path.exists(UMBRA_SOCKET): os.unlink(UMBRA_SOCKET)
+        print(f"[UMBRA] Sandboxed web app on unix socket {UMBRA_SOCKET} (gatekeeper serves http://localhost:5000)")
+        app.run(host=f"unix://{UMBRA_SOCKET}", threaded=True, use_reloader=False)
+    else:
+        print("[UMBRA] UNIFIED DASHBOARD + EXPLORER RUNNING ON http://localhost:5000")
+        app.run(host='127.0.0.1', port=5000, threaded=True, use_reloader=False)

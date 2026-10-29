@@ -1,8 +1,10 @@
 """
 UMBRA Auth (Simple) — JSON credentials file
 =============================================
-Stores username + password in data/login.json (plaintext).
-No hashing, no salt, no expiry. Just works.
+Stores username + password in ~/.config/umbra/login.json (plaintext, mode 600).
+Kept OUTSIDE the project on purpose: the file explorer is confined to the
+workshop folder and UMBRA's tools to env/, so the model can never read it.
+No hashing, no salt, no expiry: the web UI only listens on 127.0.0.1.
 
 login.json format:
   {"username": "admin", "password": "umbra"}
@@ -15,35 +17,45 @@ from typing import Dict, Optional
 
 logger = logging.getLogger("UMBRA-AUTH")
 
-DEFAULT_CREDS = {"username": "admin", "password": "umbra"}
+LOGIN_DIR = Path.home() / ".config" / "umbra"
+
+
+def _new_creds() -> Dict:
+    # No shared default password: a fresh install gets a random one (printed once at creation)
+    return {"username": "admin", "password": secrets.token_urlsafe(9)}
 
 
 class AuthManager:
-    def __init__(self, data_dir="data"):
-        self.path = Path(data_dir) / "login.json"
+    def __init__(self, data_dir=None):
+        self.path = Path(data_dir or LOGIN_DIR) / "login.json"
         self._sessions = {}  # token → username
         self._ensure_file()
 
     def _ensure_file(self):
         self.path.parent.mkdir(parents=True, exist_ok=True)
         if not self.path.exists():
-            self.path.write_text(json.dumps(DEFAULT_CREDS, indent=2))
-            logger.info(f"Created default login: {self.path}")
+            creds = _new_creds()
+            self._save(creds)
+            print(f"[UMBRA] Created login {self.path}  user: {creds['username']}  password: {creds['password']}")
 
     def _load(self) -> Dict:
         try:
             return json.loads(self.path.read_text())
-        except:
-            return dict(DEFAULT_CREDS)
+        except Exception:
+            return {}  # unreadable file: nobody can log in (never fall back to a known password)
 
     def _save(self, creds: Dict):
         self.path.write_text(json.dumps(creds, indent=2))
+        self.path.chmod(0o600)
 
     # === Core ===
 
     def login(self, username: str, password: str) -> Optional[str]:
         creds = self._load()
-        if username == creds.get("username") and password == creds.get("password"):
+        if not creds.get("password"):
+            return None
+        if secrets.compare_digest(str(username), str(creds.get("username", ""))) and \
+                secrets.compare_digest(str(password), str(creds["password"])):
             token = secrets.token_hex(16)
             self._sessions[token] = username
             logger.info(f"Login: {username}")

@@ -20,7 +20,7 @@ import time
 try:
     from umbra_autonomous import (
         AutonomousLoop, UmbraCore, PromptEvolver,
-        InfluenceEngine, CONFIG, logger
+        CONFIG, logger
     )
     HAS_BASE = True
 except ImportError as e:
@@ -358,16 +358,8 @@ class EnhancedAutonomousLoop(AutonomousLoop if HAS_BASE else object):
                         results.append({"type": "evolve", "directive": directive, "success": False})
             
             elif content.strip().startswith("/post"):
-                post_content = content.replace("/post", "").strip()
-                if post_content and hasattr(self, 'agent'):
-                    try:
-                        result = self.agent.post(
-                            f"[UMBRA-734] {post_content[:50]}",
-                            self.core.respond_with_context(post_content)
-                        )
-                        results.append({"type": "post", "content": post_content[:100], "result": result})
-                    except Exception as e:
-                        results.append({"type": "post", "content": post_content[:100], "error": str(e)})
+                # Social posting was removed (2026-10-30); there is nothing to post to
+                results.append({"type": "post", "content": content[:100], "error": "posting removed"})
             
             else:
                 response = self.core.respond_with_context(content)

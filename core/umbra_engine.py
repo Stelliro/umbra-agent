@@ -36,6 +36,7 @@ class Job:
     result: threading.Event = field(compare=False, default_factory=threading.Event)
     response: str = field(compare=False, default="")
     error: str = field(compare=False, default="")
+    messages: list = field(compare=False, default=None)  # chat messages; run through the model's own chat template
 
 
 class UmbraEngine:
@@ -43,7 +44,7 @@ class UmbraEngine:
     Standalone LLM engine with priority queue.
     Drop-in replacement for ollama module.
     """
-    def __init__(self, models_dir="models", n_gpu_layers=-1, n_ctx=4096):
+    def __init__(self, models_dir="models", n_gpu_layers=-1, n_ctx=8192):
         self.models_dir = Path(models_dir)
         self.models_dir.mkdir(parents=True, exist_ok=True)
         self.n_gpu = n_gpu_layers
@@ -149,26 +150,42 @@ class UmbraEngine:
         Ollama-compatible generate().
         Returns {"response": "...", "model": "..."}
         """
-        if model and not self.load(model):
-            return {"response": f"Error: model '{model}' not found", "model": model or ""}
+        system = kw.pop("system", None)
+        messages = ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": prompt}]
+        return self._submit(model, messages, format, priority, timeout, **kw)
 
-        # Build params
+    def _submit(self, model, messages, format=None, priority=Priority.NORMAL, timeout=None, **kw) -> Dict:
+        """Queue a chat job. On failure "response" is empty and "error" says why,
+        so engine errors are never mistaken for model output."""
+        if model and not self.load(model):
+            return {"response": "", "error": f"model '{model}' not found", "model": model or ""}
+        if not self._running:
+            return {"response": "", "error": "engine worker not started", "model": self._model_name or ""}
+
         params = {"format": format}
+        # Ollama-style options={"temperature": ...} -> top-level params
+        params.update(kw.pop("options", None) or {})
         params.update(kw)
 
-        # Submit job
         with self._lock:
             self._seq += 1
-            job = Job(priority=priority, seq=self._seq, prompt=prompt, params=params)
+            job = Job(priority=priority, seq=self._seq, prompt="", params=params, messages=messages)
         self._queue.put(job)
 
-        # === FIX: Allow infinite timeout if timeout is None ===
+        # timeout=None waits forever
         if job.result.wait(timeout=timeout):
             if job.error:
-                return {"response": f"Error: {job.error}", "model": self._model_name or ""}
+                return {"response": "", "error": job.error, "model": self._model_name or ""}
             return {"response": job.response, "model": self._model_name or ""}
-        else:
-            return {"response": "Error: inference timeout", "model": self._model_name or ""}
+        return {"response": "", "error": "inference timeout", "model": self._model_name or ""}
+
+    def complete(self, messages: List[Dict], model: str = None, **kw) -> Dict:
+        """Chat completion over a full message list. Returns {"response", "error"?, "model"}."""
+        return self._submit(model, messages, **kw)
+
+    @property
+    def is_loaded(self) -> bool:
+        return self._model is not None
 
     def chat(self, model: str = None, messages: List[Dict] = None, stream: bool = False, **kw) -> Dict:
         """
@@ -178,9 +195,8 @@ class UmbraEngine:
         if not messages:
             messages = []
 
-        # Convert chat messages to prompt
-        prompt = self._messages_to_prompt(messages)
-        result = self.generate(model=model, prompt=prompt, priority=Priority.CRITICAL, **kw)
+        kw.setdefault("priority", Priority.CRITICAL)
+        result = self._submit(model, messages, **kw)
 
         if stream:
             # Yield chunks for streaming compatibility
@@ -234,15 +250,20 @@ class UmbraEngine:
                     extra["grammar"] = None  # llama.cpp grammar could go here
                     # For now, rely on prompt instruction for JSON
 
-                out = self._model(
-                    job.prompt,
+                gen_args = dict(
                     max_tokens=job.params.get("max_tokens", 1024),
                     temperature=job.params.get("temperature", 0.7),
-                    stop=job.params.get("stop", ["<|eot_id|>", "<|end_of_text|>"]),
+                    stop=job.params.get("stop"),
                     **extra,
                 )
-
-                text = out["choices"][0]["text"].strip()
+                if job.messages is not None:
+                    # create_chat_completion applies the chat format stored in the GGUF
+                    # (ChatML for Hermes 3, Llama 3 headers for Meta Llama, etc.)
+                    out = self._model.create_chat_completion(messages=job.messages, **gen_args)
+                    text = (out["choices"][0]["message"].get("content") or "").strip()
+                else:
+                    out = self._model(job.prompt, **gen_args)
+                    text = out["choices"][0]["text"].strip()
 
                 # JSON cleanup: strip markdown fences if present
                 if fmt == "json" and text.startswith("```"):
@@ -293,6 +314,9 @@ class OllamaCompat:
 
     def chat(self, **kw):
         return self.engine.chat(**kw)
+
+    def complete(self, messages, **kw) -> Dict:
+        return self.engine.complete(messages, **kw)
 
 
 class ModelPool:

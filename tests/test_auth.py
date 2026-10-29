@@ -1,20 +1,26 @@
 """Tests for simplified JSON auth"""
 import sys, json, tempfile, shutil
-sys.path.insert(0, '/home/claude')
 from auth import AuthManager
+
+def _mgr(tmp):
+    """Manager over a login file with known test credentials."""
+    from pathlib import Path
+    (Path(tmp) / "login.json").write_text(json.dumps({"username": "admin", "password": "umbra"}))
+    return AuthManager(tmp)
 
 def test_default_creds():
     tmp = tempfile.mkdtemp()
     mgr = AuthManager(tmp)
     creds = json.loads((mgr.path).read_text())
     assert creds["username"] == "admin"
-    assert creds["password"] == "umbra"
-    print("✓ Default login.json created")
+    assert creds["password"] and creds["password"] != "umbra"  # random, never a shared default
+    assert (mgr.path.stat().st_mode & 0o777) == 0o600
+    print("✓ New login.json gets a random password, mode 600")
     shutil.rmtree(tmp)
 
 def test_login():
     tmp = tempfile.mkdtemp()
-    mgr = AuthManager(tmp)
+    mgr = _mgr(tmp)
     assert mgr.login("admin", "umbra") is not None
     assert mgr.login("admin", "wrong") is None
     assert mgr.login("nobody", "umbra") is None
@@ -23,7 +29,7 @@ def test_login():
 
 def test_session():
     tmp = tempfile.mkdtemp()
-    mgr = AuthManager(tmp)
+    mgr = _mgr(tmp)
     token = mgr.login("admin", "umbra")
     assert mgr.validate_session(token) == "admin"
     assert mgr.validate_session("bogus") is None
@@ -33,7 +39,7 @@ def test_session():
 
 def test_logout():
     tmp = tempfile.mkdtemp()
-    mgr = AuthManager(tmp)
+    mgr = _mgr(tmp)
     token = mgr.login("admin", "umbra")
     mgr.logout(token)
     assert mgr.validate_session(token) is None
@@ -42,7 +48,7 @@ def test_logout():
 
 def test_change_password():
     tmp = tempfile.mkdtemp()
-    mgr = AuthManager(tmp)
+    mgr = _mgr(tmp)
     r = mgr.change_password("admin", "umbra", "newpass")
     assert r["success"] == True
     assert mgr.login("admin", "umbra") is None
@@ -54,7 +60,7 @@ def test_change_password():
 
 def test_change_password_wrong():
     tmp = tempfile.mkdtemp()
-    mgr = AuthManager(tmp)
+    mgr = _mgr(tmp)
     r = mgr.change_password("admin", "wrong", "newpass")
     assert r["success"] == False
     assert mgr.login("admin", "umbra") is not None
@@ -63,7 +69,7 @@ def test_change_password_wrong():
 
 def test_change_username():
     tmp = tempfile.mkdtemp()
-    mgr = AuthManager(tmp)
+    mgr = _mgr(tmp)
     r = mgr.change_username("admin", "umbra", "stelliro")
     assert r["success"] == True
     assert mgr.login("admin", "umbra") is None
@@ -75,7 +81,7 @@ def test_change_username():
 
 def test_change_username_wrong():
     tmp = tempfile.mkdtemp()
-    mgr = AuthManager(tmp)
+    mgr = _mgr(tmp)
     r = mgr.change_username("admin", "wrong", "stelliro")
     assert r["success"] == False
     assert mgr.login("admin", "umbra") is not None
@@ -84,7 +90,7 @@ def test_change_username_wrong():
 
 def test_sessions_cleared_on_change():
     tmp = tempfile.mkdtemp()
-    mgr = AuthManager(tmp)
+    mgr = _mgr(tmp)
     token = mgr.login("admin", "umbra")
     assert mgr.validate_session(token) == "admin"
     mgr.change_password("admin", "umbra", "new")
@@ -94,7 +100,7 @@ def test_sessions_cleared_on_change():
 
 def test_compat_stubs():
     tmp = tempfile.mkdtemp()
-    mgr = AuthManager(tmp)
+    mgr = _mgr(tmp)
     assert mgr.has_admin() == True
     assert mgr.create_admin("x", "y") == "ok"
     token = mgr.login("x", "y")

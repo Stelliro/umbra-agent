@@ -8,6 +8,37 @@
 
 ## [Unreleased]
 
+### 2026-10-30 — Tools and research
+- [WEB] Sending a message starts UMBRA if it isn't running. The plain-model "offline" reply path was removed (it produced fabricated replies). Guarded against starting two loops.
+- [FIX] Cards are now 2400 chars and end with a visible "[lines a-b of n · use next_card]" footer. message_handler is refused during chat and limited to one per free turn.
+- [FIX] Tool-call parser accepts literal `\n` around the JSON. Clearer list_files/open_file errors ("top level" means the top folder).
+- [DATA] AI-OR paper (Jan 2026 edition, plus the Dec 2025 edition) converted to text in `env/files/research/`. The identity prompt now points to it.
+- [ARCH] Free turns: self-scheduled (`set_schedule`, `data/schedule.json`), lowest priority, up to 8 tool steps, journal at `env/workspace/journal.md`. Goal tools `add_goal` / `finish_goal`.
+- [ARCH] `core/umbra_env.py`: env/ folders, path confinement, on-demand file cards, workspace writes, outbox.
+- [ARCH] `core/umbra_tools.py`: Hermes-format tool loop for chat replies (12 tools, max 6 steps). Calls logged to `data/agent_log.jsonl`. Replies start with `[used: …]`.
+- [ARCH] `core/umbra_research.py` + `tools/fetcher.py`: web access only through an outside fetcher (allowlist file outside the sandbox, https+GET, 40/hour, text-only, log outside the sandbox). Offline Simple English Wikipedia (Kiwix ZIM, read-only mount).
+- [WEB] UMBRA's `message_handler` messages appear in the handler's chat.
+- [SEC] Escape test extended to 16 checks (fetcher refuses non-allowlisted hosts; ZIM read-only).
+
+### 2026-10-30 — Moltbook data removed, time awareness
+- [DATA] Moltbook-derived data (notes, comment logs, self-memory, post/knowledge/threat indexes, objectives, decision log) moved to `../UMBRA_734_moltbook_archive_2026-10-30/`, outside the sandbox. Credentials moved to `~/.config/umbra/moltbook_credentials/`. Moltbook removed from the identity prompt. Social code removed: `SocialAgent`, `InfluenceEngine`, `PostIndex`, `CommentLogger`, the browse/post/reply methods and the social prompt builders (about 1,480 lines). Reflection now draws on the handler conversation. `--mode=browse-test` removed. A short Moltbook history was kept in the identity prompt, a starting note and `contract/MOLTBOOK_HISTORY.md`.
+- [FIX] Prompts start with the current date/time. Conversation history and recalled notes are dated.
+- [FIX] Web: sending with no chat open creates one. Offline replies run in the background and are tagged [OFFLINE]. Model output and file names are HTML-escaped in the page.
+
+### 2026-10-29 — Linux revival
+- [BILD] Linux setup: `.venv`, prebuilt CUDA llama-cpp-python, `run_umbra.sh` launcher. Context raised to 8192.
+- [FIX] Engine uses the GGUF chat template (`create_chat_completion`). Errors are returned separately and never as reply text. "ONLINE" only prints when the model actually loaded.
+- [FIX] Web chat replies are routed by message_id. Chat is answered during the 60 s pause, at CRITICAL priority. Bad evaluation JSON no longer drops replies.
+- [SEC] Web binds 127.0.0.1. File explorer is confined to the project and refuses credential-named files. Tunnel route is disabled. Self-edit lock file is explicit.
+- [SEC] Login moved to `~/.config/umbra/login.json` (mode 600, random first password, no fallback to a default). Web refuses to start without auth.
+- [SEC] `run_umbra.sh` runs UMBRA in a bubblewrap sandbox: read-only code and model, writable `data/`+`env/` only, no network, no home folder. `tools/gatekeeper.py` (outside) checks the login and forwards over a private socket. `tools/escape_test.py` verifies the walls (14/14).
+- [ARCH] `core/note_shelf.py`: shelved notes with keyword recall, replacing "paste every insight". Raw mode: the model picks the shelf and the rules only annotate (`data/notes/hold_log.jsonl`). Near-copy objectives are merged.
+
+### Added
+- [ARCH] Added Switch CPU (`core/umbra_switch.py`) — SQLite-backed external editable weight & index database living outside the GGUF. Supports register/get/delete, reinforce/weaken/set_weight, lock, parent-child linking, keyword token search, weighted routing with optional direct-answer (CPU-only) mode, prune, snapshot/import, and stats. No external dependencies (stdlib `sqlite3`).
+- [ARCH] Added Brain orchestrator (`core/umbra_brain.py`) — thin layer wiring the Switch CPU into the GGUF engine. High-confidence `response` switches answer directly (no GGUF call); otherwise matched switches are injected as a context block into the system prompt.
+- [BE] Added unit test suite `tests/test_umbra_switch.py` (24 tests) covering CRUD, weight editing/clamping, lock semantics, search/route/direct-answer thresholds, graph linking, prune, snapshot round-trip, and Brain orchestrator behavior with a mock engine.
+
 ### Removed
 - [BILD] Removed tracked shortcuts, binary artifacts, Python cache bytecode, and archive blobs from the repository to keep the public tree clean.
 

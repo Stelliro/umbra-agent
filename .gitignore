@@ -102,3 +102,13 @@ data/inbox/
 
 # Local model storage (keep out of git)
 models/
+
+# Local-only state added 2026-10-29 (memory shelves, agent logs, weights, sandbox)
+data/notes/
+data/agent_log.jsonl
+data/schedule.json
+data/self_edit_lock.json
+data/umbra_switch.db*
+env/
+data/run/
+data/research_runs/

@@ -13,10 +13,21 @@ logger = logging.getLogger("UMBRA-AGENT")
 FORBIDDEN_DIRS = {"contract", ".git", "__pycache__", "node_modules", ".svn", ".hg"}
 PROTECTED_FILES = {"umbra_autonomous.py", "umbra_web.py", "umbra_engine.py", "phoenix_council.py"}
 MAX_FILE_SIZE = 500_000
+SECRET_NAME_RE = re.compile(r"cred|login|secret|token|\.env$|\.pem$|id_rsa|id_ed25519", re.I)
+
+def _inside(path, base):
+    """True if path is base or lives under it (after resolving symlinks and ..)."""
+    try:
+        path.relative_to(base)
+        return True
+    except ValueError:
+        return False
 
 class CodeAgent:
     def __init__(self, project_dir=".", ollama=None, model="qwen2.5-coder", backup_dir=None):
         self.project = Path(project_dir).resolve()
+        # Root switching is limited to the workshop folder that holds this project
+        self.allowed_base = self.project.parent
         self.ollama = ollama
         self.model = model
         self.backup_dir = Path(backup_dir or self.project / "data" / "backups")
@@ -28,6 +39,8 @@ class CodeAgent:
     def set_root(self, new_path):
         """Switch the active project root."""
         p = Path(new_path).resolve()
+        if not _inside(p, self.allowed_base):
+            return {"error": f"Root must be inside {self.allowed_base}"}
         if not p.exists():
             return {"error": f"Path does not exist: {new_path}"}
         if not p.is_dir():
@@ -39,6 +52,8 @@ class CodeAgent:
         """List files and folders."""
         try:
             target = (self.project / rel_path).resolve()
+            if not _inside(target, self.project):
+                return {"error": "Path is outside the project root"}
             if not target.exists():
                 return {"error": "Path not found"}
             
@@ -71,6 +86,8 @@ class CodeAgent:
     def read_file(self, rel_path):
         try:
             p = (self.project / rel_path).resolve()
+            if not _inside(p, self.project): return None
+            if SECRET_NAME_RE.search(p.name): return "<< BLOCKED: looks like a credentials file >>"
             if not p.exists(): return None
             if p.stat().st_size > MAX_FILE_SIZE: return "<< FILE TOO LARGE >>"
             return p.read_text(encoding='utf-8', errors='replace')

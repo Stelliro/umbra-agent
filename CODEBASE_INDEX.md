@@ -88,6 +88,16 @@ UMBRA/
 - Dependencies: data memory/index files, contract/transparency artifacts
 - Design Notes: Safety checks are integrated into startup/evaluation phases.
 
+#### Switch CPU and Brain Orchestrator
+
+- Files: core/umbra_switch.py, core/umbra_brain.py, tests/test_umbra_switch.py
+- Purpose: External, editable weight & index database that lives outside the GGUF. UMBRA can register, reinforce, weaken, link, prune, and route through "switches" (weighted concept/response/bias/route/fact/skill nodes) at runtime. The Brain orchestrator combines the Switch CPU with the GGUF engine: high-confidence `response` switches answer directly (pure-Python CPU mode, no GGUF call); otherwise the matched switches are injected as a context block into the GGUF system prompt.
+- Key API: `UmbraSwitch.register/get/delete/reinforce/weaken/link/prune/route/snapshot`, `UmbraBrain.chat/route/reinforce`, `get_default_switch()`
+- Storage: `data/umbra_switch.db` (SQLite, stdlib only — WAL mode, autocommit). Schema: `switches`, `switch_tokens`, `switch_log`.
+- Consumers: future wiring into umbra_web.py / umbra_engine.py / autonomous loop. Currently usable standalone.
+- Dependencies: stdlib `sqlite3`. Brain optionally accepts `UmbraEngine` / `OllamaCompat`.
+- Design Notes: Bridge between static GGUF inference and a self-editable Python-side reasoning store. As the switch DB grows, more prompts can be answered without invoking the GGUF — the seed of "the app IS the model".
+
 #### Code Agent and Self-Improvement
 
 - Files: core/code_agent.py, core/self_improve.py, core/thinking.py, core/browser_agent.py
@@ -203,6 +213,7 @@ If pytest is not configured in environment, run direct module tests from tests/ 
 - data/logs/: runtime log outputs
 - data/*index*.json: knowledge/threat/post/chat indexes
 - data/session_state.json and related files: runtime local state snapshots
+- data/umbra_switch.db: SQLite-backed external editable weight/index DB (Switch CPU)
 
 Operational rule: treat data/ as runtime-local unless a specific file is intentionally versioned for schema/reference purposes.
 

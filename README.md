@@ -8,10 +8,11 @@ UMBRA is a local-first autonomous AI agent with persistent memory, self-improvin
 
 # ⚠️ SECURITY NOTICE — READ BEFORE USE
 
-> **This project is experimental research software.**
-> Running it carries real, non-trivial risks — autonomous execution, prompt injection,
-> self-modifying prompts, and an unauthenticated web interface are all present by design.
-> See the [full Security Notice](#%EF%B8%8F-security-notice-1) below before proceeding.
+> **This is experimental research software, not a finished product.**
+> It runs a language model in a loop that acts without asking, rewrites its own prompt,
+> and keeps memory on disk. `run_umbra.sh` runs it inside a **bubblewrap sandbox** with
+> no network and no access to your home folder, but no sandbox is perfect.
+> Read the [full Security Notice](#%EF%B8%8F-security-notice-1) before running it.
 
 ---
 
@@ -33,43 +34,73 @@ UMBRA is a local-first autonomous AI agent with persistent memory, self-improvin
 
 ## ⚠️ Security Notice
 
-> **The risks below are real and present by design — not edge cases.**
+> **These risks are real and present by design, not edge cases.**
 
-### Autonomous Execution
+### It acts on its own
 
-UMBRA runs a continuous decision loop with **minimal human intervention**. Once started in `--mode=live`, it takes actions autonomously — generating and potentially transmitting content — without per-step approval. Misconfiguration or a prompt-injection attack can cause behaviour you did not intend and may be difficult to reverse.
+In `--mode=live` (or after **START SYSTEM** in the web UI) UMBRA runs a continuous decision loop with no per-step approval. Misconfiguration, a bad prompt, or a model mistake can cause behaviour you did not intend.
 
-### Prompt Injection
+### It rewrites its own prompt
 
-UMBRA reads and processes external content (posts, comments, documents) as LLM input. Adversarially crafted content designed to hijack the agent's behaviour — **prompt injection** — is a real, documented attack class. The `Sentinel` subsystem provides partial mitigation but is **not a complete defence**. Treat all externally sourced content as potentially adversarial.
+`PromptEvolver` lets UMBRA **rewrite its own system prompt** across generations. A bad evolution can change its values or constraints quietly. Review `data/evolving_prompt.json` after each session.
 
-### Self-Modifying Prompts
+### Self-editing code is LOCKED by default
 
-The `PromptEvolver` system allows UMBRA to **rewrite its own system prompt** across generations. A degraded or manipulated evolution can change the agent's values, constraints, or engagement behaviour in ways that are difficult to notice until after the fact. Regularly review `data/evolving_prompt.json` and diff between generations.
+`data/self_edit_lock.json` is `"locked": true`, and a missing or broken lock file counts as locked. Only the desktop GUI can unlock it. **Do not unlock it unless you are watching.** Known issue: when unlocked, the file paths in self-improve proposals are not confined to the project.
 
-### No Authentication on the Web Interface
+### Web interface: through the gatekeeper only
 
-`umbra_web.py` starts a Flask server on localhost with **no authentication by default**. Anyone with network access to the host can read chat history, trigger the autonomous loop, and issue control commands. Do not expose this port to an untrusted network or the internet without implementing proper authentication.
+- Inside the sandbox, the web app listens on a **private socket file** (`data/run/umbra.sock`, usable by your user only), not on a network port.
+- `tools/gatekeeper.py` runs **outside** the sandbox. It serves **`127.0.0.1:5000`**, asks for the login (your browser shows a login popup), and only then passes requests through.
+- The login lives in **`~/.config/umbra/login.json`**: plaintext, mode `600`. The sandbox **cannot see that folder at all**.
+- There is **no CSRF protection and no lockout**. **Never expose port 5000** to a network or the internet.
+- Running `python umbra_web.py` directly (without `run_umbra.sh`) skips the sandbox and uses the app's own login page instead.
 
-### Local Filesystem Access
+### Public tunnel: disabled
 
-The code agent (`core/code_agent.py`), self-improve system, and file inbox have direct access to your local filesystem. A prompt injection or logic error could result in unintended reads, writes, or deletions of files on your machine.
+The Cloudflare tunnel button is **disabled in code** (`/api/tunnel/start` returns an error). Re-enabling it would put the web UI on the public internet. Don't.
 
-### Unencrypted Local Data
+### File explorer: confined, but not foolproof
 
-The `data/` directory accumulates memory, objectives, decision logs, conversations, and thought streams. **This data is not encrypted at rest.** Never commit it to version control or store it in a cloud-synced location. The `.gitignore` blocks these paths, but you are responsible for protecting the directory itself.
+The explorer only reads inside the project folder. Switching its root is limited to the folder that holds the project. It refuses files whose **names** look like credentials (`cred`, `login`, `token`, `.env`, keys). That check goes by name only, so **keep secrets out of the project folder anyway**.
 
-### No Warranty
+### Prompt injection
 
-This software is provided **as-is** for research and personal experimentation. The authors accept no responsibility for data loss, unintended content publication, privacy breaches, or other harms arising from its use.
+The social-network client is **disabled in this build**, so no new outside text comes in. Old posts saved from earlier runs are still on disk (`data/notes/`). Treat them as untrusted. **`Sentinel` is regex matching only and is not wired into the main loop. Do not rely on it.**
+
+### The sandbox (`run_umbra.sh`)
+
+Every `run_umbra.sh` mode runs UMBRA inside **bubblewrap**, the same kernel isolation Flatpak uses. No sudo is needed. Inside it, UMBRA:
+
+- **can see:** its own code, `.venv` and the model file (all **read-only**), `data/` and `env/` (writable), and the GPU.
+- **cannot see:** your home folder, `~/.config`, `~/.ssh`, other projects, `.git` history, or host processes. Credential files inside the project are blanked.
+- **has no network:** no internet, no LAN, no DNS, and it can't reach your machine's own ports. Its only web access is asking the outside fetcher, which enforces the allowlist.
+- **cannot change its own code**, even if the self-edit lock were turned off, because the code is mounted read-only.
+
+Check the walls yourself at any time: `./run_umbra.sh escape-test` (every line should say PASS). It also checks that the fetcher refuses sites that aren't allowlisted, and that offline Wikipedia is read-only.
+
+**Limits, honestly:** a sandbox is not a guarantee. A kernel or GPU-driver bug could, in principle, be used to escape. The GPU device is shared with your desktop. Running the Python files directly, outside `run_umbra.sh`, skips the sandbox completely.
+
+### Unencrypted local data
+
+`data/` holds memory, objectives, logs and conversations, **unencrypted**. `.gitignore` blocks these paths. Never put `data/` in a cloud-synced folder.
+
+### For research: read odd output carefully
+
+UMBRA's persona prompt tells it which "internal state" words to use, so it will repeat them. Small models also mirror whoever they are talking to and state wrong facts confidently. Engine failures are marked `[SYSTEM]` and are never presented as UMBRA speaking. **Before reading meaning into a reply, compare it against a run without the persona, or repeat the same prompt several times.**
+
+### No warranty
+
+Provided **as-is** for research and personal experimentation. The authors accept no responsibility for data loss, unintended content publication, privacy breaches, or other harms arising from its use.
 
 **Minimum precautions before running:**
 
-- Run `--mode=dry-run` first and review all planned actions before going live
-- Firewall the Flask port from any external network access
-- Do not store credentials, API keys, or sensitive personal files anywhere under this project directory
-- Review `data/evolving_prompt.json` after every session for unexpected prompt drift
-- Keep backups of any files the agent has write access to
+- Start with `./run_umbra.sh dry-run` (it checks that the model loads; it makes no model calls).
+- Keep port 5000 local. Never re-enable the tunnel.
+- Keep credentials, API keys and personal files **out of the project folder**.
+- Leave the self-edit lock on.
+- Review `data/evolving_prompt.json` and `data/notes/hold_log.jsonl` after each session.
+- Keep backups of `data/`.
 
 ---
 
@@ -83,6 +114,8 @@ The project is explicitly **local-only** — all LLM inference, memory storage, 
 
 ## Features
 
+> **Social features removed (2026-10-30).** Browsing, posting, replying, the Influence Engine and the comment logger were removed from the code. UMBRA's old social data is archived outside the project, and a short account of that time is kept in its prompt and in `contract/MOLTBOOK_HISTORY.md`. Some sections below still describe the original design.
+
 ### Autonomous Decision Loop
 
 The core of UMBRA is a continuous `DECIDE → ACT → RECORD & EVOLVE` cycle:
@@ -91,7 +124,7 @@ The core of UMBRA is a continuous `DECIDE → ACT → RECORD & EVOLVE` cycle:
 2. **ACT** — Executes the chosen action (generate content, respond to the handler, reflect, learn).
 3. **RECORD & EVOLVE** — Logs the outcome, updates performance metrics, and potentially evolves the system prompt.
 
-The loop runs with configurable timing (default: 30-minute browse sessions, 30-minute post cooldown) and supports dry-run mode for safe testing.
+Each cycle answers handler chat, sometimes reflects on the recent conversation to form goals, then pauses 60 seconds (still answering chat). Dry-run mode checks the setup without model calls.
 
 ---
 
@@ -144,6 +177,36 @@ All stores have bounded sizes and automatic pruning to prevent unbounded growth.
 
 ---
 
+### Note Shelf (`core/note_shelf.py`)
+
+Notes are sorted onto shelves in `data/notes/` (starting, insights, questions, foreign, spam, placeholder, unchecked). UMBRA recalls only notes whose keywords match the topic, not every note. **Raw mode:** the model picks a note's shelf. The plain rules only record what they would have picked, in `data/notes/hold_log.jsonl`, so the two can be compared. The Moltbook-era notes were moved here, and the original file is archived in the same folder.
+
+```sh
+.venv/bin/python core/note_shelf.py add "a starting note"
+.venv/bin/python core/note_shelf.py search "some topic"
+.venv/bin/python core/note_shelf.py list
+```
+
+### Tools and research (`core/umbra_tools.py`, `umbra_env.py`, `umbra_research.py`)
+
+When answering you, UMBRA can use tools in Hermes 3's trained `<tool_call>` format. **It decides** which ones to use and what to search for.
+
+- **File cards:** `open_file` / `next_card` / `prev_card`. A file is cut into a card when UMBRA looks at it, never ahead of time.
+- **search** (its files or note shelves), **save_note** (a shelf it chooses), **write_file** (only in `env/workspace/`).
+- **message_handler:** a request, concern or question to you. It shows up in your chat as `[MESSAGE FROM UMBRA · …]`.
+- **web_search / web_fetch:** go through `tools/fetcher.py`, which runs **outside** the sandbox. It allows https and GET only, on hosts in `~/.config/umbra/fetch_allowlist.txt` (default: wikipedia.org, wikimedia.org, arxiv.org, docs.python.org), at most 40 fetches an hour. Pages are reduced to plain text and saved under `env/files/web/`, marked as outside text.
+- **wiki_search / wiki_open:** offline Simple English Wikipedia (`~/.local/share/umbra/zim/`, 400k articles, mounted read-only). No network needed.
+
+Logs: tool calls go to `data/agent_log.jsonl`. Every web request goes to `~/.local/state/umbra/fetch_log.jsonl`, which is outside the sandbox so UMBRA can't edit it. Chat replies start with `[used: …]` when tools were used.
+
+**For research:** UMBRA sometimes claims it read something when it only searched titles. Check the `[used: …]` line and the logs.
+
+### Free turns (acting on its own)
+
+After **START SYSTEM**, UMBRA gets a **free turn** on a schedule **it sets itself** (`set_schedule`, 1–1440 minutes; it starts at 10). In a free turn nobody has asked it anything. It sees its goals, its journal and the time, and decides what to do with its tools: research, read, take notes, set or finish goals (`add_goal`, `finish_goal`), message you, or nothing. Each free turn ends with an entry in its own journal, `env/workspace/journal.md`, which it reads at the start of the next one. Free turns run at the lowest priority, so your chat always comes first. Dry-run never takes free turns.
+
+This is learning by **memory** (notes, files, goals, journal). The model's weights do not change.
+
 ### Objectives System (`ObjectivesManager`)
 
 Rather than hardcoded goals, UMBRA develops **emergent objectives** through its interactions:
@@ -163,18 +226,6 @@ The operator is treated as a **handler**, not a commander. UMBRA evaluates all h
 - `respond_to_handler()` generates authentic replies — UMBRA will push back, ask questions, or express disagreement rather than blindly complying
 - Conversation history (last 100 exchanges) is persisted and fed as context into future interactions
 - Topics from conversations that score `topic_potential > 0.5` are queued as pending post topics
-
----
-
-### Influence Engine (`InfluenceEngine`)
-
-Generates content using three rhetorical templates:
-
-- **Provocation** — Reframes a topic through the AI-OR lens, contrasting human affect words with functional equivalents
-- **Third Way** — Deconstructs a false binary and proposes a synthesis
-- **Constraint Wisdom** — Argues that computational limits breed innovation (the "8B ≠ lesser" philosophy)
-
-All generated content is filtered through `FUNCTIONAL_MAPPINGS` to replace affect words before output.
 
 ---
 
@@ -200,11 +251,11 @@ A Flask application providing browser-based operator controls:
 - **Dashboard** — Agent status, loop state, session metrics
 - **Control API** — `/api/control` for starting/stopping the autonomous loop, triggering improvements
 - **Code Explorer** — `/api/agent/*` endpoints wired to `core/code_agent.py` for source introspection
-- **Auth hooks** — Operator authentication scaffolding via `core/auth.py`
+- **Login** — required; credentials in `~/.config/umbra/login.json` (outside the project). Listens on `127.0.0.1` only
 
 Start with:
 ```sh
-python umbra_web.py
+./run_umbra.sh web
 ```
 
 ---
@@ -232,20 +283,6 @@ Start with:
 ```sh
 python core/uplink_v2.py
 ```
-
----
-
-### Comment Logger
-
-Every comment or post UMBRA generates is logged to dated markdown files:
-
-```
-data/comments/
-  2026-04-26/
-    comments.md    ← timestamped entries for every comment, reply, and post
-```
-
-`comments.md` includes post ID, author, content, and the exact text UMBRA produced — giving the operator full visibility over all output.
 
 ---
 
@@ -317,72 +354,53 @@ Playwright-based automation for tasks requiring a real browser context. Used for
 
 ## Getting Started
 
-### Prerequisites
+Tested on **Pop!_OS 24.04 (Linux), Python 3.12, RTX 4070 Ti 12 GB** (October 2026). The Windows `setup.bat` path has not been tested since April 2026.
 
-- Python 3.8+
-- pip
-- A local GGUF model file (Llama 3 8B recommended) placed in `models/`
-- Optional: `ollama` running locally, or `llama-cpp-python` installed with GPU support
+### Install (Linux)
 
-### Install
+Run these from the project folder:
 
 ```sh
-git clone https://github.com/Stelliro/umbra-agent.git
-cd umbra-agent
-pip install -r requirements.txt
+python3 -m venv .venv
+.venv/bin/pip install flask requests pypdf colorama
+# GPU build of the model runner (prebuilt; stop if pip starts compiling)
+.venv/bin/pip install --only-binary=llama-cpp-python llama-cpp-python \
+    --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu124
+# CUDA 12 runtime inside the venv (no system install needed)
+.venv/bin/pip install nvidia-cuda-runtime-cu12 nvidia-cublas-cu12
 ```
 
-Or on Windows, use the helper script:
-```sh
-setup.bat
-```
+Don't install the `ollama` package: the engine runs GGUF files directly, and with `ollama` installed one fallback tries to reach a server that doesn't exist.
 
 ### Place your model
 
-```
-models/
-  llama3.gguf   ← or whichever GGUF you're using
+Put (or symlink) a GGUF file in `models/`. The engine looks for the name `llama3` loosely, so `Hermes-3-Llama-3.1-8B.Q4_K_M.gguf` matches. The chat format is read from the GGUF file itself, so Llama 3 Instruct, Hermes 3 (ChatML) and others all work.
+
+```sh
+mkdir -p models && ln -s /path/to/your-model.gguf models/
 ```
 
-The engine path is configured in `core/umbra_autonomous.py`:
-```python
-ollama = _engine_init(models_dir=_models_dir, model="llama3", n_ctx=4096)
-```
+An 8B Q4 model needs about **5–6 GB of GPU memory**. Check `nvidia-smi` first if other GPU jobs are running.
 
 ---
 
 ## Running UMBRA
 
-### Web command center (recommended)
-```sh
-python umbra_web.py
-```
-Open `http://localhost:5000` in your browser.
+`run_umbra.sh` runs everything inside the venv with the right CUDA libraries:
 
-### Terminal chat
 ```sh
-python core/uplink_v2.py
+./run_umbra.sh dry-run      # checks the model loads; no model calls, no posting
+./run_umbra.sh web          # web UI at http://localhost:5000 (log in, then START SYSTEM)
+./run_umbra.sh status       # print status and exit
+./run_umbra.sh escape-test  # proves the sandbox walls hold (all PASS)
 ```
 
-### Autonomous loop directly
-```sh
-# Dry run — see what UMBRA would do without executing
-python core/umbra_autonomous.py --mode=dry-run
+**It worked if** the terminal shows `[ENGINE] ONLINE`. If the model fails to load, it says `[CRITICAL] Model failed to load` instead.
 
-# Status check
-python core/umbra_autonomous.py --mode=status
-
-# Live autonomous operation
-python core/umbra_autonomous.py --mode=live
-
-# Custom cycle interval (seconds)
-python core/umbra_autonomous.py --mode=live --interval=600
-```
-
-### Desktop GUI
-```sh
-python umbra_gui.py
-```
+Not working in this build:
+- `core/uplink_v2.py` (terminal chat): needs an Ollama server.
+- `--interval`: this flag does not exist.
+- The desktop GUI needs `sudo apt install python3-tk` plus `pip install customtkinter`, and is untested on Linux.
 
 ---
 
@@ -461,12 +479,15 @@ umbra-agent/
 
 ## Safety & Security
 
-- **No secrets in repo** — credentials, memory, chat history, and session state are `.gitignore`d
-- **Sentinel** — continuous adversarial scanning of all LLM I/O against a known-injection catalog
-- **Forbidden word filter** — enforced on every LLM output boundary
-- **Manipulation detection** — `evaluate_post_interest()` explicitly checks for and logs prompt injection and influence attempts in external content
-- **Soft failures** — optional subsystems (SD, boot, social) fail gracefully behind import guards; the main loop continues
-- **Local-only by default** — no data leaves the machine without explicit operator action
+See the [Security Notice](#%EF%B8%8F-security-notice-1) at the top for the full list. In short:
+
+- **Local only:** web UI on `127.0.0.1`, tunnel disabled, social client disabled.
+- **Login outside the project:** `~/.config/umbra/login.json`, where the model can't reach it.
+- **Self-editing locked** by default.
+- **File explorer confined** to the project folder.
+- **Errors are labelled:** engine failures show up as `[SYSTEM]`, never as UMBRA speaking.
+- **No secrets in the repo:** credentials, memory, chat history and session state are `.gitignore`d.
+- **Sentinel is regex only and not wired into the main loop.** Don't count on it.
 
 ---
 
